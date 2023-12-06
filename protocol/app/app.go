@@ -1281,9 +1281,18 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	proposerAddr := sdk.ConsAddress(req.Header.ProposerAddress)
 	middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
 
-	fmt.Println("BeginBlocker")
-	d := app.DistrKeeper.GetTotalRewards(ctx)
-	fmt.Println("Total rewards: ", d)
+	d := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
+	account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
+
+	response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: account.GetAddress().String(),
+		Denom:   "adydx",
+	})
+	if err != nil {
+		fmt.Sprintf("Error getting balance: %s", err.Error())
+	}
+	fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d, "Balance: ", response.Balance.Amount)
+
 	app.scheduleForkUpgrade(ctx)
 	return app.ModuleManager.BeginBlock(ctx, req)
 }
@@ -1294,9 +1303,18 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	// Note that the middleware is only used by `CheckTx` and `DeliverTx`, and not `EndBlocker`.
 	// Panics from `EndBlocker` will not be logged by the middleware and will lead to consensus failures.
 	middleware.Logger = app.Logger()
-	fmt.Println("EndBlocker")
-	d := app.DistrKeeper.GetTotalRewards(ctx)
-	fmt.Println("Total rewards: ", d)
+	d := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
+	account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
+
+	responseQueryB, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: account.GetAddress().String(),
+		Denom:   "adydx",
+	})
+	if err != nil {
+		fmt.Sprintf("Error getting balance: %s", err.Error())
+	}
+	fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d, "Balance: ", responseQueryB.Balance.Amount)
+
 	response := app.ModuleManager.EndBlock(ctx, req)
 	block := app.IndexerEventManager.ProduceBlock(ctx)
 	app.IndexerEventManager.SendOnchainData(block)

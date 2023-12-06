@@ -506,7 +506,7 @@ func New(
 
 	app.GovKeeper = govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-			// register the governance hooks
+		// register the governance hooks
 		),
 	)
 
@@ -1281,6 +1281,9 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	proposerAddr := sdk.ConsAddress(req.Header.ProposerAddress)
 	middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
 
+	fmt.Println("BeginBlocker")
+	d := app.DistrKeeper.GetTotalRewards(ctx)
+	fmt.Println("Total rewards: ", d)
 	app.scheduleForkUpgrade(ctx)
 	return app.ModuleManager.BeginBlock(ctx, req)
 }
@@ -1291,7 +1294,9 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	// Note that the middleware is only used by `CheckTx` and `DeliverTx`, and not `EndBlocker`.
 	// Panics from `EndBlocker` will not be logged by the middleware and will lead to consensus failures.
 	middleware.Logger = app.Logger()
-
+	fmt.Println("EndBlocker")
+	d := app.DistrKeeper.GetTotalRewards(ctx)
+	fmt.Println("Total rewards: ", d)
 	response := app.ModuleManager.EndBlock(ctx, req)
 	block := app.IndexerEventManager.ProduceBlock(ctx)
 	app.IndexerEventManager.SendOnchainData(block)
@@ -1310,11 +1315,8 @@ func (app *App) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.Res
 		panic(err)
 	}
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
-
-	fmt.Println("Genesis state", genesisState)
-	fmt.Println("app.appCodec", app.appCodec)
-
 	initResponse := app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+
 	block := app.IndexerEventManager.ProduceBlock(ctx)
 	app.IndexerEventManager.SendOnchainData(block)
 	app.IndexerEventManager.ClearEvents(ctx)

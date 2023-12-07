@@ -15,11 +15,11 @@ func (r RewardCalculatorService) RewardDelta(blockHeight int64, denom string) (f
 	//AfterBeginBlocker
 	var totalRewardAfterBeginBlocker TotalReward
 	database := r.Database
-	database.Where("block_height = ? AND denom = ? and type = ?", blockHeight, denom, "AfterBeginBlocker").First(&totalRewardAfterBeginBlocker)
+	database.Where("block_height = ? AND denom = ? and event_type = ?", blockHeight, denom, "AfterBeginBlocker").First(&totalRewardAfterBeginBlocker)
 
 	// BeforeBeginBlocker
 	var totalRewardBeforeBeginBlocker TotalReward
-	database.Where("block_height = ? AND denom = ? and type = ?", blockHeight, denom, "BeforeBeginBlocker").First(&totalRewardBeforeBeginBlocker)
+	database.Where("block_height = ? AND denom = ? and event_type = ?", blockHeight, denom, "BeforeBeginBlocker").First(&totalRewardBeforeBeginBlocker)
 
 	rewardAfterBeginBlocker, err := strconv.ParseFloat(totalRewardAfterBeginBlocker.Amount, 64)
 	if err != nil {

@@ -1285,7 +1285,10 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	fmt.Println("------------------------------------------")
 	d := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
 	account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
-	fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d)
+	fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight())
+	for _, reward := range d {
+		fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight(), "Reward: ", reward.String())
+	}
 	// get all assets
 	assets := app.AssetsKeeper.GetAllAssets(ctx)
 	fmt.Println("Len of assets: ", len(assets))
@@ -1315,7 +1318,10 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	fmt.Println("------------------------------------------")
 	d := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
 	account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
-	fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d)
+	fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight())
+	for _, reward := range d {
+		fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight(), "Reward: ", reward.String())
+	}
 	// get all assets
 	assets := app.AssetsKeeper.GetAllAssets(ctx)
 	fmt.Println("Len of assets: ", len(assets))
@@ -1336,6 +1342,18 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	app.IndexerEventManager.SendOnchainData(block)
 	return response
 }
+
+//------------------------------------------
+//BeginBlocker BlockHeight 2757986 Total rewards:  645210657324032283880.257649838974256242adydx,122659229723.330772544873851315ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5
+//Len of assets:  1
+//BeginBlocker BlockHeight 2757986 Balance:  122659232252 Denom:  ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5
+//------------------------------------------
+//2:39AM INF client state updated client-id=07-tendermint-3 heights=[{"revision_height":12653813,"revision_number":1}] module=x/ibc/client
+//------------------------------------------
+//EndBlocker BlockHeight 2757986 Total rewards:  645217764574032283880.051539588974256242adydx,122659663847.330772544861261719ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5
+//Len of assets:  1
+//EndBlocker BlockHeight 2757986 Balance:  122659666376 Denom:  ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5
+//------------------------------------------
 
 // Commiter application updates every commit
 func (app *App) Commiter(ctx sdk.Context) {

@@ -1281,19 +1281,32 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	proposerAddr := sdk.ConsAddress(req.Header.ProposerAddress)
 	middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
 
+	fmt.Println("------------------------------------------")
 	d := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
 	account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
-
-	response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: account.GetAddress().String(),
-		Denom:   "adydx",
-	})
-	if err != nil {
-		fmt.Sprintf("Error getting balance: %s", err.Error())
+	fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d)
+	// get all assets
+	assets := app.AssetsKeeper.GetAllAssets(ctx)
+	for _, asset := range assets {
+		response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: account.GetAddress().String(),
+			Denom:   asset.Denom,
+		})
+		if err != nil {
+			fmt.Sprintf("Error getting balance: %s", err.Error())
+		}
+		fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
 	}
-	fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d, "Balance: ", response.Balance.Amount)
+	fmt.Println("------------------------------------------")
 
 	app.scheduleForkUpgrade(ctx)
+	//responseB := app.ModuleManager.BeginBlock(ctx, req)
+	//var a abci.ResponseBeginBlock
+	//events := responseB.GetEvents()
+	//events = append(events, abci2.Event{
+	//	Type_:      "distribution-balance",
+	//	Attributes: []abci.EventAttribute{{Key: []byte("total-rewards"), Value: []byte(d.String())}, {Key: []byte("balance"), Value: []byte(response.Balance.Amount.String())}},
+	//}
 	return app.ModuleManager.BeginBlock(ctx, req)
 }
 
@@ -1303,17 +1316,23 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	// Note that the middleware is only used by `CheckTx` and `DeliverTx`, and not `EndBlocker`.
 	// Panics from `EndBlocker` will not be logged by the middleware and will lead to consensus failures.
 	middleware.Logger = app.Logger()
+	fmt.Println("------------------------------------------")
 	d := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
 	account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
-
-	responseQueryB, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: account.GetAddress().String(),
-		Denom:   "adydx",
-	})
-	if err != nil {
-		fmt.Sprintf("Error getting balance: %s", err.Error())
+	fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d)
+	// get all assets
+	assets := app.AssetsKeeper.GetAllAssets(ctx)
+	for _, asset := range assets {
+		response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: account.GetAddress().String(),
+			Denom:   asset.Denom,
+		})
+		if err != nil {
+			fmt.Sprintf("Error getting balance: %s", err.Error())
+		}
+		fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
 	}
-	fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d, "Balance: ", responseQueryB.Balance.Amount)
+	fmt.Println("------------------------------------------")
 
 	response := app.ModuleManager.EndBlock(ctx, req)
 	block := app.IndexerEventManager.ProduceBlock(ctx)

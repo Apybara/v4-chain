@@ -1340,7 +1340,7 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight())
 	for _, reward := range dA {
 		var totalRewards apybara_indexer.TotalReward
-		totalRewards.EventType = "BeginBlocker"
+		totalRewards.EventType = "AfterBeginBlocker"
 		totalRewards.BlockHeight = ctx.BlockHeight()
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
@@ -1386,7 +1386,7 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	fmt.Println("BeforeEndBlocker", "BlockHeight", ctx.BlockHeight())
 	for _, reward := range d {
 		var totalRewards apybara_indexer.TotalReward
-		totalRewards.EventType = "EndBlocker"
+		totalRewards.EventType = "BeforeEndBlocker"
 		totalRewards.BlockHeight = ctx.BlockHeight()
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
@@ -1405,7 +1405,7 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 			fmt.Sprintf("Error getting balance: %s", err.Error())
 		}
 		var assetToTrack apybara_indexer.Asset
-		assetToTrack.EventType = "EndBlocker"
+		assetToTrack.EventType = "BeforeEndBlocker"
 		assetToTrack.BlockHeight = ctx.BlockHeight()
 		assetToTrack.Amount = response.Balance.Amount.String()
 		assetToTrack.Denom = asset.Denom
@@ -1426,7 +1426,7 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	fmt.Println("AfterEndBlocker", "BlockHeight", ctx.BlockHeight())
 	for _, reward := range dA {
 		var totalRewards apybara_indexer.TotalReward
-		totalRewards.EventType = "EndBlocker"
+		totalRewards.EventType = "AfterEndBlocker"
 		totalRewards.BlockHeight = ctx.BlockHeight()
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
@@ -1445,7 +1445,7 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 			fmt.Sprintf("Error getting balance: %s", err.Error())
 		}
 		var assetToTrack apybara_indexer.Asset
-		assetToTrack.EventType = "EndBlocker"
+		assetToTrack.EventType = "AfterEndBlocker"
 		assetToTrack.BlockHeight = ctx.BlockHeight()
 		assetToTrack.Amount = responseA.Balance.Amount.String()
 		assetToTrack.Denom = asset.Denom

@@ -26,6 +26,16 @@ type TotalReward struct {
 	Denom       string `json:"denom"`
 }
 
+type RewardDataDelta struct {
+	gorm.Model
+	AfterBeginBlockerAmount  string `json:"after_begin_blocker_amount"`
+	BeforeBeginBlockerAmount string `json:"before_begin_blocker_amount"`
+	Denom                    string `json:"denom"`
+	BlockHeight              int64  `json:"block_height"`
+	Delta                    string `json:"delta"`
+	AnnualizeReward500kb     string `json:"annualize_reward_500kb"`
+}
+
 type Asset struct {
 	gorm.Model
 	EventType   string `json:"event_type" gorm:"index:idx_event_type"`

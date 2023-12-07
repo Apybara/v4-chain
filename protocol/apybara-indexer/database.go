@@ -62,7 +62,7 @@ func ConnectPg(postgresDsn string) (*gorm.DB, error) {
 
 	sqlDB, err := database.DB()
 
-	database.AutoMigrate(&BlockData{}, &TotalReward{}, &Asset{})
+	database.AutoMigrate(&BlockData{}, &TotalReward{}, &Asset{}, &RewardDataDelta{})
 
 	if err != nil {
 		return nil, err

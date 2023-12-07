@@ -62,8 +62,8 @@ func (r RewardCalculatorService) AnnualizedRewards(blockHeight int64, denom stri
 	var rewardDataDelta RewardDataDelta
 	var annualizedRewards500kb float64
 	db.Model(&rewardDataDelta).Where("block_height = ? AND denom = ?", blockHeight, denom).First(&rewardDataDelta)
-
-	db.Raw("SELECT SUM(delta) FROM reward_data_delta WHERE block_height >= ? AND block_height <= ? AND denom = ?", blockHeight-500000, blockHeight, denom).Scan(&annualizedRewards500kb)
+	//SELECT SUM(cast(delta AS DOUBLE PRECISION)) FROM reward_data_delta WHERE block_height < 2860685 - 1 AND block_height >= 2860685 - 500000 and denom = 'adydx';
+	db.Raw("SELECT SUM(cast(delta AS DOUBLE PRECISION)) FROM reward_data_delta WHERE block_height < ? - 1 AND block_height >= ? - 500000 and denom = ?", blockHeight, blockHeight, denom).Scan(&annualizedRewards500kb)
 	annualizedRewards500kb = annualizedRewards500kb * 365 * 24 * 60 * 60
 	fmt.Sprintf("%.6f", annualizedRewards500kb)
 	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.6f", annualizedRewards500kb)

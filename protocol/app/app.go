@@ -1288,6 +1288,7 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d)
 	// get all assets
 	assets := app.AssetsKeeper.GetAllAssets(ctx)
+	fmt.Println("Len of assets: ", len(assets))
 	for _, asset := range assets {
 		response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: account.GetAddress().String(),
@@ -1317,6 +1318,7 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight(), "Total rewards: ", d)
 	// get all assets
 	assets := app.AssetsKeeper.GetAllAssets(ctx)
+	fmt.Println("Len of assets: ", len(assets))
 	for _, asset := range assets {
 		response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: account.GetAddress().String(),

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	apybara_indexer "github.com/dydxprotocol/v4-chain/protocol/apybara-indexer"
+	"gorm.io/gorm"
 	"io"
 	"math"
 	"math/big"
@@ -187,8 +189,9 @@ var (
 )
 
 var (
-	_ runtime.AppI            = (*App)(nil)
-	_ servertypes.Application = (*App)(nil)
+	_         runtime.AppI            = (*App)(nil)
+	_         servertypes.Application = (*App)(nil)
+	ApybaraDB *gorm.DB
 )
 
 func init() {
@@ -202,6 +205,14 @@ func init() {
 	// Set DefaultPowerReduction to 1e18 to avoid overflow whe calculating
 	// consensus power.
 	sdk.DefaultPowerReduction = lib.PowerReduction
+
+	dsn := os.Getenv("APYBARA_INDEXER_DB_DSN")
+	db, err := apybara_indexer.ConnectPg(dsn)
+	if err != nil {
+		fmt.Sprintf("failed to connect to db: %s", err.Error())
+	}
+	ApybaraDB = db
+
 }
 
 // App extends an ABCI application, but with most of its parameters exported.
@@ -1283,16 +1294,23 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
 
 	fmt.Println("------------------------------------------")
+
 	d := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
 	account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
 	fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight())
 	for _, reward := range d {
-		fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight(), "Reward: ", reward.String())
+		var totalRewards apybara_indexer.TotalReward
+		totalRewards.EventType = "BeginBlocker"
+		totalRewards.BlockHeight = ctx.BlockHeight()
+		totalRewards.Amount = reward.Amount.String()
+		totalRewards.Denom = reward.Denom
+		ApybaraDB.Create(&totalRewards)
 	}
 	// get all assets
 	assets := app.AssetsKeeper.GetAllAssets(ctx)
 	fmt.Println("Len of assets: ", len(assets))
 	for _, asset := range assets {
+
 		response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: account.GetAddress().String(),
 			Denom:   asset.Denom,
@@ -1300,6 +1318,13 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 		if err != nil {
 			fmt.Sprintf("Error getting balance: %s", err.Error())
 		}
+		var assetToTrack apybara_indexer.Asset
+		assetToTrack.EventType = "BeginBlocker"
+		assetToTrack.BlockHeight = ctx.BlockHeight()
+		assetToTrack.Amount = response.Balance.Amount.String()
+		assetToTrack.Denom = asset.Denom
+		assetToTrack.Address = account.GetAddress().String()
+		ApybaraDB.Create(&assetToTrack)
 		fmt.Println("BeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
 	}
 	fmt.Println("------------------------------------------")
@@ -1318,8 +1343,15 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	fmt.Println("------------------------------------------")
 	d := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
 	account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
+
 	fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight())
 	for _, reward := range d {
+		var totalRewards apybara_indexer.TotalReward
+		totalRewards.EventType = "EndBlocker"
+		totalRewards.BlockHeight = ctx.BlockHeight()
+		totalRewards.Amount = reward.Amount.String()
+		totalRewards.Denom = reward.Denom
+		ApybaraDB.Create(&totalRewards)
 		fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight(), "Reward: ", reward.String())
 	}
 	// get all assets
@@ -1333,6 +1365,13 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 		if err != nil {
 			fmt.Sprintf("Error getting balance: %s", err.Error())
 		}
+		var assetToTrack apybara_indexer.Asset
+		assetToTrack.EventType = "EndBlocker"
+		assetToTrack.BlockHeight = ctx.BlockHeight()
+		assetToTrack.Amount = response.Balance.Amount.String()
+		assetToTrack.Denom = asset.Denom
+		assetToTrack.Address = account.GetAddress().String()
+		ApybaraDB.Create(&assetToTrack)
 		fmt.Println("EndBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
 	}
 	fmt.Println("------------------------------------------")

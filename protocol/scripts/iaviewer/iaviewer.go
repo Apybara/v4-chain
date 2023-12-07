@@ -59,7 +59,7 @@ func AddPrefixFlag(cmd *cobra.Command) {
 }
 
 func AddVersionFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64("version", 0, "version of the tree (default: latest version)")
+	cmd.Flags().Uint64("version", 2, "version of the tree (default: latest version)")
 }
 
 func DataAllCmd() *cobra.Command {

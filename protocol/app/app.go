@@ -1277,6 +1277,7 @@ func (app *App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+
 	// Update the proposer address in the logger for the panic logging middleware.
 	proposerAddr := sdk.ConsAddress(req.Header.ProposerAddress)
 	middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
@@ -1300,13 +1301,6 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	fmt.Println("------------------------------------------")
 
 	app.scheduleForkUpgrade(ctx)
-	//responseB := app.ModuleManager.BeginBlock(ctx, req)
-	//var a abci.ResponseBeginBlock
-	//events := responseB.GetEvents()
-	//events = append(events, abci2.Event{
-	//	Type_:      "distribution-balance",
-	//	Attributes: []abci.EventAttribute{{Key: []byte("total-rewards"), Value: []byte(d.String())}, {Key: []byte("balance"), Value: []byte(response.Balance.Amount.String())}},
-	//}
 	return app.ModuleManager.BeginBlock(ctx, req)
 }
 

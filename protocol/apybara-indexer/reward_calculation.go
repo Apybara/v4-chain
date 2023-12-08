@@ -41,7 +41,7 @@ func (r RewardCalculatorService) RewardDelta(blockHeight int64, denom string) (f
 	rewardDataDelta.BeforeBeginBlockerAmount = totalRewardBeforeBeginBlocker.Amount
 	rewardDataDelta.Denom = denom
 	rewardDataDelta.BlockHeight = blockHeight
-	rewardDataDelta.Delta = fmt.Sprintf("%.6f", rewardDelta)
+	rewardDataDelta.Delta = fmt.Sprintf("%.18f", rewardDelta)
 	database.Create(&rewardDataDelta)
 
 	//AnnualizeReward500kb
@@ -51,7 +51,7 @@ func (r RewardCalculatorService) RewardDelta(blockHeight int64, denom string) (f
 		fmt.Println("error calculating annualizedRewards500kb", err)
 		return 0, err
 	}
-	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.6f", annualizedRewards500kb)
+	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.18f", annualizedRewards500kb)
 	database.Save(&rewardDataDelta)
 	return rewardDelta, nil
 }
@@ -66,7 +66,7 @@ func (r RewardCalculatorService) AnnualizedRewards(blockHeight int64, denom stri
 	db.Raw("SELECT SUM(cast(delta AS DOUBLE PRECISION)) FROM reward_data_delta WHERE block_height < ? - 1 AND block_height >= ? - 500000 and denom = ?", blockHeight, blockHeight, denom).Scan(&annualizedRewards500kb)
 	annualizedRewards500kb = annualizedRewards500kb * 365 * 24 * 60 * 60
 	fmt.Sprintf("%.6f", annualizedRewards500kb)
-	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.6f", annualizedRewards500kb)
+	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.18f", annualizedRewards500kb)
 
 	return annualizedRewards500kb, nil
 }

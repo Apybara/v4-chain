@@ -105,7 +105,6 @@ func (r RewardCalculatorService) AnnualizedRewards(blockHeight int64, denom stri
 	fmt.Sprintf("%.6f", annualizedRewards500kb)
 	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.18f", annualizedRewards500kb)
 	rewardDataDelta.SumDelta500kb = fmt.Sprintf("%.18f", sumOfDeltaPast500kBlocks)
-	rewardDataDelta.SumDeltaPast3Days = fmt.Sprintf("%.18f", sumOfDeltaPast3Days)
 
 	return annualizedRewards500kb, sumOfDeltaPast500kBlocks, nil
 }

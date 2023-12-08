@@ -47,19 +47,18 @@ func (r RewardCalculatorService) RewardDelta(ctx types.Context, denom string) (f
 	database.Create(&rewardDataDelta)
 
 	//AnnualizeReward500kb
-	rewardDataDeltaWithAnnualizeRewards, rewardDataDeltaSumOfDelta, sumOfDeltaPast3Days, err := r.AnnualizedRewards(ctx.BlockHeight(), denom)
+	rewardDataDeltaWithAnnualizeRewards, rewardDataDeltaSumOfDelta, err := r.AnnualizedRewards(ctx.BlockHeight(), denom)
 	if err != nil {
 		fmt.Println("error calculating annualizedRewards500kb", err)
 		return 0, err
 	}
 	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.18f", rewardDataDeltaWithAnnualizeRewards)
 	rewardDataDelta.SumDelta500kb = fmt.Sprintf("%.18f", rewardDataDeltaSumOfDelta)
-	rewardDataDelta.SumDeltaPast3Days = fmt.Sprintf("%.18f", sumOfDeltaPast3Days)
 	database.Save(&rewardDataDelta)
 	return rewardDelta, nil
 }
 
-func (r RewardCalculatorService) AnnualizedRewards(blockHeight int64, denom string) (float64, float64, float64, error) {
+func (r RewardCalculatorService) AnnualizedRewards(blockHeight int64, denom string) (float64, float64, error) {
 	//define annualizedRewards500kb = {sum of rewardDelta over the past 500k blocks} / (timestamp[n] - timestamp[n-500k blocks]) * 365 * 24 * 60 * 60
 	db := r.Database
 	var rewardDataDelta RewardDataDelta
@@ -108,5 +107,5 @@ func (r RewardCalculatorService) AnnualizedRewards(blockHeight int64, denom stri
 	rewardDataDelta.SumDelta500kb = fmt.Sprintf("%.18f", sumOfDeltaPast500kBlocks)
 	rewardDataDelta.SumDeltaPast3Days = fmt.Sprintf("%.18f", sumOfDeltaPast3Days)
 
-	return annualizedRewards500kb, sumOfDeltaPast500kBlocks, sumOfDeltaPast3Days, nil
+	return annualizedRewards500kb, sumOfDeltaPast500kBlocks, nil
 }

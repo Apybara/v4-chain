@@ -1459,8 +1459,9 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 
 	// calculate the delta per block per reward denom here
 	// calculate the AnnualReward500kb per block per reward denom here
+
 	for _, totalReward := range dA {
-		ApybaraIndexer.RewardDelta(ctx.BlockHeight(), totalReward.Denom)
+		ApybaraIndexer.RewardDelta(ctx, totalReward.Denom)
 	}
 
 	return response

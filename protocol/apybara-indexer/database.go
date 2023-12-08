@@ -34,6 +34,7 @@ type RewardDataDelta struct {
 	BlockHeight              int64  `json:"block_height"`
 	Delta                    string `json:"delta"`
 	SumDelta500kb            string `json:"sum_delta_500kb"`
+	SumDelta75kb             string `json:"sum_delta_75kb"`
 	AnnualizeReward500kb     string `json:"annualize_reward_500kb"`
 	Timestamp                int64  `json:"timestamp" gorm:"index:idx_timestamp"`
 }

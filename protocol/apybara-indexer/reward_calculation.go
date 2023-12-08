@@ -48,21 +48,23 @@ func (r RewardCalculatorService) RewardDelta(ctx types.Context, denom string) (f
 
 	//AnnualizeReward500kb
 	//define annualizedRewards500kb = {sum of rewardDelta over the past 500k blocks} / (timestamp[n] - timestamp[n-500k blocks]) * 365 * 24 * 60 * 60
-	annualizedRewards500kb, err := r.AnnualizedRewards(ctx.BlockHeight(), denom)
+	rewardDataDeltaWithAnnualizeRewards, rewardDataDeltaSumOfDelta, err := r.AnnualizedRewards(ctx.BlockHeight(), denom)
 	if err != nil {
 		fmt.Println("error calculating annualizedRewards500kb", err)
 		return 0, err
 	}
-	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.18f", annualizedRewards500kb)
+	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.18f", rewardDataDeltaWithAnnualizeRewards)
+	rewardDataDelta.SumDelta500kb = fmt.Sprintf("%.18f", rewardDataDeltaSumOfDelta)
 	database.Save(&rewardDataDelta)
 	return rewardDelta, nil
 }
 
-func (r RewardCalculatorService) AnnualizedRewards(blockHeight int64, denom string) (float64, error) {
+func (r RewardCalculatorService) AnnualizedRewards(blockHeight int64, denom string) (float64, float64, error) {
 	//define annualizedRewards500kb = {sum of rewardDelta over the past 500k blocks} / (timestamp[n] - timestamp[n-500k blocks]) * 365 * 24 * 60 * 60
 	db := r.Database
 	var rewardDataDelta RewardDataDelta
 	var annualizedRewards500kb float64
+	var sumOfDeltaPast500kBlocks float64
 	var timestamp500kBlocks int64
 	db.Model(&rewardDataDelta).Where("block_height = ? AND denom = ?", blockHeight, denom).First(&rewardDataDelta)
 	//SELECT SUM(cast(delta AS DOUBLE PRECISION)) FROM reward_data_delta WHERE block_height < 2860685 - 1 AND block_height >= 2860685 - 500000 and denom = 'adydx';
@@ -88,10 +90,11 @@ func (r RewardCalculatorService) AnnualizedRewards(blockHeight int64, denom stri
 	//) AS time_difference
 
 	db.Raw("SELECT (SELECT timestamp FROM reward_data_delta WHERE block_height = ? AND denom = ?) - COALESCE((SELECT timestamp FROM reward_data_delta WHERE block_height = ? - 500000 AND denom = ? ORDER BY timestamp DESC LIMIT 1), (SELECT timestamp FROM reward_data_delta WHERE denom = ? ORDER BY timestamp ASC LIMIT 1)) AS time_difference", blockHeight, denom, blockHeight, denom, denom).Scan(&timestamp500kBlocks)
-	db.Raw("SELECT SUM(cast(delta AS DOUBLE PRECISION)) FROM reward_data_delta WHERE block_height < ? - 1 AND block_height >= ? - 500000 and denom = ?", blockHeight, blockHeight, denom).Scan(&annualizedRewards500kb)
-	annualizedRewards500kb = annualizedRewards500kb / float64(timestamp500kBlocks) * 365 * 24 * 60 * 60
+	db.Raw("SELECT SUM(cast(delta AS DOUBLE PRECISION)) FROM reward_data_delta WHERE block_height < ? - 1 AND block_height >= ? - 500000 and denom = ?", blockHeight, blockHeight, denom).Scan(&sumOfDeltaPast500kBlocks)
+	annualizedRewards500kb = sumOfDeltaPast500kBlocks / float64(timestamp500kBlocks) * 365 * 24 * 60 * 60
 	fmt.Sprintf("%.6f", annualizedRewards500kb)
 	rewardDataDelta.AnnualizeReward500kb = fmt.Sprintf("%.18f", annualizedRewards500kb)
+	rewardDataDelta.SumDelta500kb = fmt.Sprintf("%.18f", sumOfDeltaPast500kBlocks)
 
-	return annualizedRewards500kb, nil
+	return annualizedRewards500kb, sumOfDeltaPast500kBlocks, nil
 }

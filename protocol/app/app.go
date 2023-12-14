@@ -521,7 +521,7 @@ func New(
 
 	app.GovKeeper = govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
@@ -1398,6 +1398,10 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 		ApybaraDB.Create(&assetToTrack)
 		fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
 	}
+	for _, totalReward := range dA {
+		ApybaraIndexer.RewardDelta(ctx, totalReward.Denom)
+	}
+
 	fmt.Println("------------------------------------------")
 
 	return responseBeginBlock

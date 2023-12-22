@@ -1030,7 +1030,7 @@ func New(
 		stakingtypes.ModuleName,
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
-		ratelimitmoduletypes.ModuleName,
+		//ratelimitmoduletypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		govtypes.ModuleName,
@@ -1074,7 +1074,7 @@ func New(
 		upgradetypes.ModuleName,
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
-		ratelimitmoduletypes.ModuleName,
+		//ratelimitmoduletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		icatypes.ModuleName,
 		pricesmoduletypes.ModuleName,
@@ -1114,7 +1114,7 @@ func New(
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ratelimitmoduletypes.ModuleName,
+		//ratelimitmoduletypes.ModuleName,
 		feegrant.ModuleName,
 		consensusparamtypes.ModuleName,
 		icatypes.ModuleName,
@@ -1151,7 +1151,7 @@ func New(
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ratelimitmoduletypes.ModuleName,
+		//ratelimitmoduletypes.ModuleName,
 		feegrant.ModuleName,
 		consensusparamtypes.ModuleName,
 		icatypes.ModuleName,
@@ -1274,7 +1274,7 @@ func New(
 		// Hydrate the keeper in-memory data structures.
 		app.hydrateKeeperInMemoryDataStructures()
 	}
-	app.initializeRateLimiters()
+	//app.initializeRateLimiters()
 
 	// Report out app version and git commit. This will be run when validators restart.
 	version := version.NewInfo()

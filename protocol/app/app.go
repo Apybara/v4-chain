@@ -1343,12 +1343,12 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 
 		// update the blockerInfo
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
-			blockInfosForAfterUsdc.BeforeBeginBlocker = reward.Amount
+			blockInfosForAfterUsdc.AfterBeginBlocker = reward.Amount
 			blockInfosForAfterUsdc.Denom = reward.Denom
 		}
 
 		if reward.Denom == "adydx" {
-			blockInforsForAfterDydx.BeforeBeginBlocker = reward.Amount
+			blockInforsForAfterDydx.AfterBeginBlocker = reward.Amount
 			blockInforsForAfterDydx.Denom = reward.Denom
 		}
 

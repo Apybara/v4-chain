@@ -21,7 +21,19 @@ func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, block
 	database := r.Database
 	for _, blocker := range blockerInfo {
 
-		rewardDelta := blocker.AfterBeginBlocker.Sub(blocker.BeforeBeginBlocker)
+		afterBeginBlocker, err := strconv.ParseFloat(blocker.AfterBeginBlocker.String(), 64)
+		if err != nil {
+			fmt.Println("error parsing float for afterBeginBlocker", err)
+			return err
+		}
+
+		beforeBeginBlocker, err := strconv.ParseFloat(blocker.BeforeBeginBlocker.String(), 64)
+		if err != nil {
+			fmt.Println("error parsing float for beforeBeginBlocker", err)
+			return err
+		}
+
+		rewardDelta := afterBeginBlocker - beforeBeginBlocker
 
 		//
 		var rewardDataDelta RewardDataDelta

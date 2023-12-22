@@ -173,7 +173,6 @@ import (
 
 	// IBC
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
-	icahost "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host"
 	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
@@ -572,27 +571,29 @@ func New(
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 
-	app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
-		appCodec,
-		keys[ratelimitmoduletypes.StoreKey],
-		// set the governance and delaymsg module accounts as the authority for conducting upgrades
-		[]string{
-			lib.GovModuleAddress.String(),
-			delaymsgmoduletypes.ModuleAddress.String(),
-		},
-	)
-
-	// TODO(CORE-834): Add ratelimitKeeper to the IBC transfer stack.
-
-	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
-	// Create static IBC router, add transfer route, then set and seal it
+	//app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
+	//	appCodec,
+	//	keys[ratelimitmoduletypes.StoreKey],
+	//	// set the governance and delaymsg module accounts as the authority for conducting upgrades
+	//	[]string{
+	//		lib.GovModuleAddress.String(),
+	//		delaymsgmoduletypes.ModuleAddress.String(),
+	//	},
+	//)
+	//
+	//// TODO(CORE-834): Add ratelimitKeeper to the IBC transfer stack.
+	//
+	//icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
+	//// Create static IBC router, add transfer route, then set and seal it
+	//ibcRouter := ibcporttypes.NewRouter()
+	//// Ordering of `AddRoute` does not matter.
+	//ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
+	//ibcRouter.AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
+	//
+	//app.IBCKeeper.SetRouter(ibcRouter)
 	ibcRouter := ibcporttypes.NewRouter()
-	// Ordering of `AddRoute` does not matter.
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
-	ibcRouter.AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
-
 	app.IBCKeeper.SetRouter(ibcRouter)
-
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec, keys[evidencetypes.StoreKey], app.StakingKeeper, app.SlashingKeeper,
@@ -1412,7 +1413,6 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	//fmt.Println("------------------------------------------")
 
 	app.scheduleForkUpgrade(ctx)
-
 	responseBeginBlock := app.ModuleManager.BeginBlock(ctx, req)
 
 	fmt.Println("------------------------------------------")

@@ -17,9 +17,7 @@ type BlockerAmount struct {
 	Denom              string
 }
 
-func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, blocker BlockerAmount) error {
-	database := r.Database
-	//for _, blocker := range blockerInfo {
+func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, blocker BlockerAmount, database *gorm.DB) error {
 
 	afterBeginBlocker, err := strconv.ParseFloat(blocker.AfterBeginBlocker.String(), 64)
 	if err != nil {

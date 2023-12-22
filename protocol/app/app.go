@@ -1374,8 +1374,15 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	//	fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
 	//}
 
-	ApybaraIndexer.RewardDeltaForBlockers(ctx, blockInfosForUsdc)
-	ApybaraIndexer.RewardDeltaForBlockers(ctx, blockInfosForAdydx)
+	err := ApybaraDB.Transaction(func(tx *gorm.DB) error {
+		ApybaraIndexer.RewardDeltaForBlockers(ctx, blockInfosForUsdc, tx)
+		ApybaraIndexer.RewardDeltaForBlockers(ctx, blockInfosForAdydx, tx)
+		return nil
+	})
+	if err != nil {
+		fmt.Println("Error in transaction: ", err.Error())
+	}
+
 	BlockerInfoIndexCounter++
 	fmt.Println("------------------------------------------")
 

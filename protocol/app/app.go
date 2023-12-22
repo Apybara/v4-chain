@@ -7,7 +7,6 @@ import (
 	apybara_indexer "github.com/dydxprotocol/v4-chain/protocol/apybara-indexer"
 	"gorm.io/gorm"
 	"io"
-	"math"
 	"math/big"
 	"net/http"
 	"os"
@@ -16,8 +15,6 @@ import (
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
-	sdklog "cosmossdk.io/log"
-
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmjson "github.com/cometbft/cometbft/libs/json"
@@ -90,8 +87,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
-	"google.golang.org/grpc"
-
 	// App
 	"github.com/dydxprotocol/v4-chain/protocol/app/basic_manager"
 	"github.com/dydxprotocol/v4-chain/protocol/app/flags"
@@ -99,7 +94,7 @@ import (
 	"github.com/dydxprotocol/v4-chain/protocol/app/prepare"
 	"github.com/dydxprotocol/v4-chain/protocol/app/process"
 	// Lib
-	"github.com/dydxprotocol/v4-chain/protocol/app/stoppable"
+	//"github.com/dydxprotocol/v4-chain/protocol/app/stoppable"
 	"github.com/dydxprotocol/v4-chain/protocol/lib"
 	"github.com/dydxprotocol/v4-chain/protocol/lib/metrics"
 	timelib "github.com/dydxprotocol/v4-chain/protocol/lib/time"
@@ -108,22 +103,12 @@ import (
 	// Mempool
 	"github.com/dydxprotocol/v4-chain/protocol/mempool"
 
-	// Daemons
-	bridgeclient "github.com/dydxprotocol/v4-chain/protocol/daemons/bridge/client"
-	"github.com/dydxprotocol/v4-chain/protocol/daemons/configs"
 	daemonflags "github.com/dydxprotocol/v4-chain/protocol/daemons/flags"
-	liquidationclient "github.com/dydxprotocol/v4-chain/protocol/daemons/liquidation/client"
 	metricsclient "github.com/dydxprotocol/v4-chain/protocol/daemons/metrics/client"
-	pricefeedclient "github.com/dydxprotocol/v4-chain/protocol/daemons/pricefeed/client"
-	"github.com/dydxprotocol/v4-chain/protocol/daemons/pricefeed/client/constants"
 	pricefeed_types "github.com/dydxprotocol/v4-chain/protocol/daemons/pricefeed/types"
 	daemonserver "github.com/dydxprotocol/v4-chain/protocol/daemons/server"
-	daemonservertypes "github.com/dydxprotocol/v4-chain/protocol/daemons/server/types"
 	bridgedaemontypes "github.com/dydxprotocol/v4-chain/protocol/daemons/server/types/bridge"
-	liquidationtypes "github.com/dydxprotocol/v4-chain/protocol/daemons/server/types/liquidations"
 	pricefeedtypes "github.com/dydxprotocol/v4-chain/protocol/daemons/server/types/pricefeed"
-	daemontypes "github.com/dydxprotocol/v4-chain/protocol/daemons/types"
-
 	// Modules
 	assetsmodule "github.com/dydxprotocol/v4-chain/protocol/x/assets"
 	assetsmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/assets/keeper"
@@ -556,13 +541,13 @@ func New(
 	// Create server that will ingest gRPC messages from daemon clients.
 	// Note that gRPC clients will block on new gRPC connection until the gRPC server is ready to
 	// accept new connections.
-	app.Server = daemonserver.NewServer(
-		logger,
-		grpc.NewServer(),
-		&daemontypes.FileHandlerImpl{},
-		daemonFlags.Shared.SocketAddress,
-		appFlags.GrpcAddress,
-	)
+	//app.Server = daemonserver.NewServer(
+	//	logger,
+	//	grpc.NewServer(),
+	//	&daemontypes.FileHandlerImpl{},
+	//	daemonFlags.Shared.SocketAddress,
+	//	appFlags.GrpcAddress,
+	//)
 	// Setup server for pricefeed messages. The server will wait for gRPC messages containing price
 	// updates and then encode them into an in-memory cache shared by the prices module.
 	// The in-memory data structure is shared by the x/prices module and PriceFeed daemon.
@@ -573,8 +558,8 @@ func New(
 	// potentially liquidatable subaccounts and then encode them into an in-memory slice shared by
 	// the liquidations module.
 	// The in-memory data structure is shared by the x/clob module and liquidations daemon.
-	liquidatableSubaccountIds := liquidationtypes.NewLiquidatableSubaccountIds()
-	app.Server.WithLiquidatableSubaccountIds(liquidatableSubaccountIds)
+	//liquidatableSubaccountIds := liquidationtypes.NewLiquidatableSubaccountIds()
+	//app.Server.WithLiquidatableSubaccountIds(liquidatableSubaccountIds)
 
 	// Setup server for bridge messages.
 	// The in-memory data structure is shared by the x/bridge module and bridge daemon.
@@ -591,67 +576,67 @@ func New(
 		go app.Server.Start()
 
 		// Start liquidations client for sending potentially liquidatable subaccounts to the application.
-		if daemonFlags.Liquidation.Enabled {
-			app.Server.ExpectLiquidationsDaemon(
-				daemonservertypes.MaximumAcceptableUpdateDelay(daemonFlags.Liquidation.LoopDelayMs),
-			)
-			go func() {
-				if err := liquidationclient.Start(
-					// The client will use `context.Background` so that it can have a different context from
-					// the main application.
-					context.Background(),
-					daemonFlags,
-					appFlags,
-					logger,
-					&daemontypes.GrpcClientImpl{},
-				); err != nil {
-					panic(err)
-				}
-			}()
-		}
-
-		// Non-validating full-nodes have no need to run the price daemon.
-		if !appFlags.NonValidatingFullNode && daemonFlags.Price.Enabled {
-			exchangeStartupConfig := configs.ReadExchangeStartupConfigFile(homePath)
-			app.Server.ExpectPricefeedDaemon(daemonservertypes.MaximumAcceptableUpdateDelay(daemonFlags.Price.LoopDelayMs))
-			// Start pricefeed client for sending prices for the pricefeed server to consume. These prices
-			// are retrieved via third-party APIs like Binance and then are encoded in-memory and
-			// periodically sent via gRPC to a shared socket with the server.
-			client := pricefeedclient.StartNewClient(
-				// The client will use `context.Background` so that it can have a different context from
-				// the main application.
-				context.Background(),
-				daemonFlags,
-				appFlags,
-				logger,
-				&daemontypes.GrpcClientImpl{},
-				exchangeStartupConfig,
-				constants.StaticExchangeDetails,
-				&pricefeedclient.SubTaskRunnerImpl{},
-			)
-			stoppable.RegisterServiceForTestCleanup(appFlags.GrpcAddress, client)
-		}
-
-		// Start Bridge Daemon.
-		// Non-validating full-nodes have no need to run the bridge daemon.
-		if !appFlags.NonValidatingFullNode && daemonFlags.Bridge.Enabled {
-			// TODO(CORE-582): Re-enable bridge daemon registration once the bridge daemon is fixed in local / CI
-			// environments.
-			// app.Server.ExpectBridgeDaemon(daemonservertypes.MaximumAcceptableUpdateDelay(daemonFlags.Bridge.LoopDelayMs))
-			go func() {
-				if err := bridgeclient.Start(
-					// The client will use `context.Background` so that it can have a different context from
-					// the main application.
-					context.Background(),
-					daemonFlags,
-					appFlags,
-					logger.With(sdklog.ModuleKey, "bridge-daemon"),
-					&daemontypes.GrpcClientImpl{},
-				); err != nil {
-					panic(err)
-				}
-			}()
-		}
+		//if daemonFlags.Liquidation.Enabled {
+		//	app.Server.ExpectLiquidationsDaemon(
+		//		daemonservertypes.MaximumAcceptableUpdateDelay(daemonFlags.Liquidation.LoopDelayMs),
+		//	)
+		//	go func() {
+		//		if err := liquidationclient.Start(
+		//			// The client will use `context.Background` so that it can have a different context from
+		//			// the main application.
+		//			context.Background(),
+		//			daemonFlags,
+		//			appFlags,
+		//			logger,
+		//			&daemontypes.GrpcClientImpl{},
+		//		); err != nil {
+		//			panic(err)
+		//		}
+		//	}()
+		//}
+		//
+		//// Non-validating full-nodes have no need to run the price daemon.
+		//if !appFlags.NonValidatingFullNode && daemonFlags.Price.Enabled {
+		//	exchangeStartupConfig := configs.ReadExchangeStartupConfigFile(homePath)
+		//	app.Server.ExpectPricefeedDaemon(daemonservertypes.MaximumAcceptableUpdateDelay(daemonFlags.Price.LoopDelayMs))
+		//	// Start pricefeed client for sending prices for the pricefeed server to consume. These prices
+		//	// are retrieved via third-party APIs like Binance and then are encoded in-memory and
+		//	// periodically sent via gRPC to a shared socket with the server.
+		//	client := pricefeedclient.StartNewClient(
+		//		// The client will use `context.Background` so that it can have a different context from
+		//		// the main application.
+		//		context.Background(),
+		//		daemonFlags,
+		//		appFlags,
+		//		logger,
+		//		&daemontypes.GrpcClientImpl{},
+		//		exchangeStartupConfig,
+		//		constants.StaticExchangeDetails,
+		//		&pricefeedclient.SubTaskRunnerImpl{},
+		//	)
+		//	stoppable.RegisterServiceForTestCleanup(appFlags.GrpcAddress, client)
+		//}
+		//
+		//// Start Bridge Daemon.
+		//// Non-validating full-nodes have no need to run the bridge daemon.
+		//if !appFlags.NonValidatingFullNode && daemonFlags.Bridge.Enabled {
+		//	// TODO(CORE-582): Re-enable bridge daemon registration once the bridge daemon is fixed in local / CI
+		//	// environments.
+		//	// app.Server.ExpectBridgeDaemon(daemonservertypes.MaximumAcceptableUpdateDelay(daemonFlags.Bridge.LoopDelayMs))
+		//	go func() {
+		//		if err := bridgeclient.Start(
+		//			// The client will use `context.Background` so that it can have a different context from
+		//			// the main application.
+		//			context.Background(),
+		//			daemonFlags,
+		//			appFlags,
+		//			logger.With(sdklog.ModuleKey, "bridge-daemon"),
+		//			&daemontypes.GrpcClientImpl{},
+		//		); err != nil {
+		//			panic(err)
+		//		}
+		//	}()
+		//}
 
 		// Start the Metrics Daemon.
 		// The metrics daemon is purely used for observability. It should never bring the app down.
@@ -669,9 +654,9 @@ func New(
 				}
 			}()
 			// Don't panic if metrics daemon loops are delayed. Use maximum value.
-			app.Server.ExpectMetricsDaemon(
-				daemonservertypes.MaximumAcceptableUpdateDelay(math.MaxUint32),
-			)
+			//app.Server.ExpectMetricsDaemon(
+			//	daemonservertypes.MaximumAcceptableUpdateDelay(math.MaxUint32),
+			//)
 			metricsclient.Start(
 				// The client will use `context.Background` so that it can have a different context from
 				// the main application.
@@ -792,20 +777,20 @@ func New(
 	)
 	vestModule := vestmodule.NewAppModule(appCodec, app.VestKeeper)
 
-	app.RewardsKeeper = *rewardsmodulekeeper.NewKeeper(
-		appCodec,
-		keys[rewardsmoduletypes.StoreKey],
-		tkeys[rewardsmoduletypes.TransientStoreKey],
-		app.AssetsKeeper,
-		app.BankKeeper,
-		app.FeeTiersKeeper,
-		app.PricesKeeper,
-		// set the governance and delaymsg module accounts as the authority for conducting upgrades
-		[]string{
-			authtypes.NewModuleAddress(delaymsgmoduletypes.ModuleName).String(),
-			authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		},
-	)
+	//app.RewardsKeeper = *rewardsmodulekeeper.NewKeeper(
+	//	appCodec,
+	//	keys[rewardsmoduletypes.StoreKey],
+	//	tkeys[rewardsmoduletypes.TransientStoreKey],
+	//	app.AssetsKeeper,
+	//	app.BankKeeper,
+	//	app.FeeTiersKeeper,
+	//	app.PricesKeeper,
+	//	// set the governance and delaymsg module accounts as the authority for conducting upgrades
+	//	[]string{
+	//		authtypes.NewModuleAddress(delaymsgmoduletypes.ModuleName).String(),
+	//		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	//	},
+	//)
 	rewardsModule := rewardsmodule.NewAppModule(appCodec, app.RewardsKeeper)
 
 	app.SubaccountsKeeper = *subaccountsmodulekeeper.NewKeeper(

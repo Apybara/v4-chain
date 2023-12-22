@@ -1,9 +1,6 @@
 package apybara_indexer
 
 import (
-	"fmt"
-	"time"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -55,7 +52,7 @@ func ConnectPg(postgresDsn string) (*gorm.DB, error) {
 
 	if postgresDsn[:8] == "postgres" {
 		database, err = gorm.Open(postgres.Open(postgresDsn), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Silent),
+			Logger: logger.Default.LogMode(logger.Info),
 		})
 	} else {
 		database, err = gorm.Open(sqlite.Open(postgresDsn), &gorm.Config{
@@ -63,26 +60,11 @@ func ConnectPg(postgresDsn string) (*gorm.DB, error) {
 		})
 	}
 
-	sqlDB, err := database.DB()
+	if err != nil {
+		return nil, err
+	}
 
 	database.AutoMigrate(&BlockData{}, &TotalReward{}, &Asset{}, &RewardDataDelta{})
 
-	if err != nil {
-		return nil, err
-	}
-	//conection pooling settings
-	sqlDB.SetMaxIdleConns(20)
-	sqlDB.SetMaxOpenConns(90)
-	sqlDB.SetConnMaxLifetime(time.Hour)
-
-	// Attempt to enable the uuid-ossp extension
-	err = database.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error
-	if err != nil {
-		return nil, fmt.Errorf("failed to enable uuid-ossp extension: %w", err)
-	}
-
-	if err != nil {
-		return nil, err
-	}
 	return database, nil
 }

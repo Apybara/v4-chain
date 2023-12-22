@@ -1269,10 +1269,8 @@ func (app *App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	var blockInfosForBeforeUsdc apybara_indexer.BlockerAmount
-	var blockInforsForBeforeDydx apybara_indexer.BlockerAmount
-	var blockInfosForAfterUsdc apybara_indexer.BlockerAmount
-	var blockInforsForAfterDydx apybara_indexer.BlockerAmount
+	var blockInfosForUsdc apybara_indexer.BlockerAmount
+	var blockInfosForAdydx apybara_indexer.BlockerAmount
 	app.UpgradeKeeper.SetDowngradeVerified(true)
 	// Update the proposer address in the logger for the panic logging middleware.
 	proposerAddr := sdk.ConsAddress(req.Header.ProposerAddress)
@@ -1291,13 +1289,13 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 		totalRewards.Denom = reward.Denom
 
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
-			blockInfosForBeforeUsdc.BeforeBeginBlocker = reward.Amount
-			blockInfosForBeforeUsdc.Denom = reward.Denom
+			blockInfosForUsdc.BeforeBeginBlocker = reward.Amount
+			blockInfosForUsdc.Denom = reward.Denom
 		}
 
 		if reward.Denom == "adydx" {
-			blockInforsForBeforeDydx.BeforeBeginBlocker = reward.Amount
-			blockInforsForBeforeDydx.Denom = reward.Denom
+			blockInfosForAdydx.BeforeBeginBlocker = reward.Amount
+			blockInfosForAdydx.Denom = reward.Denom
 		}
 
 	}
@@ -1343,13 +1341,13 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 
 		// update the blockerInfo
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
-			blockInfosForAfterUsdc.AfterBeginBlocker = reward.Amount
-			blockInfosForAfterUsdc.Denom = reward.Denom
+			blockInfosForUsdc.AfterBeginBlocker = reward.Amount
+			blockInfosForUsdc.Denom = reward.Denom
 		}
 
 		if reward.Denom == "adydx" {
-			blockInforsForAfterDydx.AfterBeginBlocker = reward.Amount
-			blockInforsForAfterDydx.Denom = reward.Denom
+			blockInfosForAdydx.AfterBeginBlocker = reward.Amount
+			blockInfosForAdydx.Denom = reward.Denom
 		}
 
 	}
@@ -1376,13 +1374,8 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	//	fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
 	//}
 
-	usdcMap := make(map[string]apybara_indexer.BlockerAmount)
-	adydxMap := make(map[string]apybara_indexer.BlockerAmount)
-
-	usdcMap["usdc"] = blockInfosForBeforeUsdc
-	adydxMap["adydx"] = blockInforsForBeforeDydx
-	ApybaraIndexer.RewardDeltaForBlockers(ctx, usdcMap)
-	ApybaraIndexer.RewardDeltaForBlockers(ctx, adydxMap)
+	ApybaraIndexer.RewardDeltaForBlockers(ctx, blockInfosForUsdc)
+	ApybaraIndexer.RewardDeltaForBlockers(ctx, blockInfosForAdydx)
 	BlockerInfoIndexCounter++
 	fmt.Println("------------------------------------------")
 

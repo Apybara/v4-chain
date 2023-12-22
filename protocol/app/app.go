@@ -173,7 +173,6 @@ import (
 	// IBC
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
 	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
@@ -534,7 +533,7 @@ func New(
 
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedIBCTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	//scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 
 	app.CapabilityKeeper.Seal()
 
@@ -549,17 +548,17 @@ func New(
 	)
 
 	// Create ICA Host Keeper
-	app.ICAHostKeeper = icahostkeeper.NewKeeper(
-		appCodec,
-		keys[icahosttypes.StoreKey], // key
-		app.getSubspace(icahosttypes.SubModuleName), // paramSpace
-		app.IBCKeeper.ChannelKeeper,                 // ics4Wrapper, may be replaced with middleware such as ics29 fee
-		app.IBCKeeper.ChannelKeeper,                 // channelKeeper
-		&app.IBCKeeper.PortKeeper,                   // portKeeper
-		app.AccountKeeper,                           // accountKeeper
-		scopedICAHostKeeper,                         // scopedKeeper
-		app.MsgServiceRouter(),                      // msgRouter
-	)
+	//app.ICAHostKeeper = icahostkeeper.NewKeeper(
+	//	appCodec,
+	//	keys[icahosttypes.StoreKey], // key
+	//	app.getSubspace(icahosttypes.SubModuleName), // paramSpace
+	//	app.IBCKeeper.ChannelKeeper,                 // ics4Wrapper, may be replaced with middleware such as ics29 fee
+	//	app.IBCKeeper.ChannelKeeper,                 // channelKeeper
+	//	&app.IBCKeeper.PortKeeper,                   // portKeeper
+	//	app.AccountKeeper,                           // accountKeeper
+	//	scopedICAHostKeeper,                         // scopedKeeper
+	//	app.MsgServiceRouter(),                      // msgRouter
+	//)
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
@@ -1727,7 +1726,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govv1.ParamKeyTable()) //nolint:staticcheck
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(icahosttypes.SubModuleName)
+	//paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 
 	return paramsKeeper

@@ -11,13 +11,13 @@ type RewardCalculatorService struct {
 	Database *gorm.DB
 }
 
-type BlockerAmounts struct {
+type BlockerAmount struct {
 	BeforeBeginBlocker types.Dec
 	AfterBeginBlocker  types.Dec
 	Denom              string
 }
 
-func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, blockerInfo []BlockerAmounts) error {
+func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, blockerInfo map[string]BlockerAmount) error {
 	database := r.Database
 	for _, blocker := range blockerInfo {
 

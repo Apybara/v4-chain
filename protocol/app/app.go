@@ -191,10 +191,11 @@ var (
 )
 
 var (
-	_              runtime.AppI            = (*App)(nil)
-	_              servertypes.Application = (*App)(nil)
-	ApybaraDB      *gorm.DB
-	ApybaraIndexer apybara_indexer.RewardCalculatorService
+	_                       runtime.AppI            = (*App)(nil)
+	_                       servertypes.Application = (*App)(nil)
+	ApybaraDB               *gorm.DB
+	ApybaraIndexer          apybara_indexer.RewardCalculatorService
+	BlockerInfoIndexCounter int64 = 0
 )
 
 func init() {
@@ -1268,8 +1269,10 @@ func (app *App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	var blockerInfo []apybara_indexer.BlockerAmounts
-
+	var blockInfosForBeforeUsdc apybara_indexer.BlockerAmount
+	var blockInforsForBeforeDydx apybara_indexer.BlockerAmount
+	var blockInfosForAfterUsdc apybara_indexer.BlockerAmount
+	var blockInforsForAfterDydx apybara_indexer.BlockerAmount
 	app.UpgradeKeeper.SetDowngradeVerified(true)
 	// Update the proposer address in the logger for the panic logging middleware.
 	proposerAddr := sdk.ConsAddress(req.Header.ProposerAddress)
@@ -1286,8 +1289,17 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 		totalRewards.BlockHeight = ctx.BlockHeight()
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
-		//ApybaraDB.Create(&totalRewards)
-		blockerInfo = append(blockerInfo, apybara_indexer.BlockerAmounts{BeforeBeginBlocker: reward.Amount, Denom: reward.Denom})
+
+		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
+			blockInfosForBeforeUsdc.BeforeBeginBlocker = reward.Amount
+			blockInfosForBeforeUsdc.Denom = reward.Denom
+		}
+
+		if reward.Denom == "adydx" {
+			blockInforsForBeforeDydx.BeforeBeginBlocker = reward.Amount
+			blockInforsForBeforeDydx.Denom = reward.Denom
+		}
+
 	}
 	// get all assets
 	//assets := app.AssetsKeeper.GetAllAssets(ctx)
@@ -1328,7 +1340,18 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
 		//ApybaraDB.Create(&totalRewards)
-		blockerInfo = append(blockerInfo, apybara_indexer.BlockerAmounts{AfterBeginBlocker: reward.Amount, Denom: reward.Denom})
+
+		// update the blockerInfo
+		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
+			blockInfosForAfterUsdc.BeforeBeginBlocker = reward.Amount
+			blockInfosForAfterUsdc.Denom = reward.Denom
+		}
+
+		if reward.Denom == "adydx" {
+			blockInforsForAfterDydx.BeforeBeginBlocker = reward.Amount
+			blockInforsForAfterDydx.Denom = reward.Denom
+		}
+
 	}
 
 	// get all assets
@@ -1352,8 +1375,15 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 	//	ApybaraDB.Create(&assetToTrack)
 	//	fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
 	//}
-	ApybaraIndexer.RewardDeltaForBlockers(ctx, blockerInfo)
 
+	usdcMap := make(map[string]apybara_indexer.BlockerAmount)
+	adydxMap := make(map[string]apybara_indexer.BlockerAmount)
+
+	usdcMap["usdc"] = blockInfosForBeforeUsdc
+	adydxMap["adydx"] = blockInforsForBeforeDydx
+	ApybaraIndexer.RewardDeltaForBlockers(ctx, usdcMap)
+	ApybaraIndexer.RewardDeltaForBlockers(ctx, adydxMap)
+	BlockerInfoIndexCounter++
 	fmt.Println("------------------------------------------")
 
 	return responseBeginBlock

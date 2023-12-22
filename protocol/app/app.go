@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	apybara_indexer "github.com/dydxprotocol/v4-chain/protocol/apybara-indexer"
+	"gorm.io/gorm"
 	"io"
 	"math"
 	"math/big"
@@ -188,8 +191,10 @@ var (
 )
 
 var (
-	_ runtime.AppI            = (*App)(nil)
-	_ servertypes.Application = (*App)(nil)
+	_              runtime.AppI            = (*App)(nil)
+	_              servertypes.Application = (*App)(nil)
+	ApybaraDB      *gorm.DB
+	ApybaraIndexer apybara_indexer.RewardCalculatorService
 )
 
 func init() {
@@ -203,6 +208,14 @@ func init() {
 	// Set DefaultPowerReduction to 1e18 to avoid overflow whe calculating
 	// consensus power.
 	sdk.DefaultPowerReduction = lib.PowerReduction
+
+	dsn := os.Getenv("APYBARA_INDEXER_DB_DSN")
+	db, err := apybara_indexer.ConnectPg(dsn)
+	if err != nil {
+		fmt.Sprintf("failed to connect to db: %s", err.Error())
+	}
+	ApybaraDB = db
+	ApybaraIndexer = apybara_indexer.RewardCalculatorService{Database: db}
 }
 
 // App extends an ABCI application, but with most of its parameters exported.
@@ -1255,12 +1268,95 @@ func (app *App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	var blockerInfo []apybara_indexer.BlockerAmounts
+
+	app.UpgradeKeeper.SetDowngradeVerified(true)
 	// Update the proposer address in the logger for the panic logging middleware.
 	proposerAddr := sdk.ConsAddress(req.Header.ProposerAddress)
 	middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
 
+	fmt.Println("------------------------------------------")
+
+	d := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	//account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
+	fmt.Println("BeforeBeginBlocker", "BlockHeight", ctx.BlockHeight())
+	for _, reward := range d {
+		var totalRewards apybara_indexer.TotalReward
+		totalRewards.EventType = "BeforeBeginBlocker"
+		totalRewards.BlockHeight = ctx.BlockHeight()
+		totalRewards.Amount = reward.Amount.String()
+		totalRewards.Denom = reward.Denom
+		//ApybaraDB.Create(&totalRewards)
+		blockerInfo = append(blockerInfo, apybara_indexer.BlockerAmounts{BeforeBeginBlocker: reward.Amount, Denom: reward.Denom})
+	}
+	// get all assets
+	//assets := app.AssetsKeeper.GetAllAssets(ctx)
+	//fmt.Println("Len of assets: ", len(assets))
+	//for _, asset := range assets {
+	//
+	//	response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
+	//		Address: account.GetAddress().String(),
+	//		Denom:   asset.Denom,
+	//	})
+	//	if err != nil {
+	//		fmt.Sprintf("Error getting balance: %s", err.Error())
+	//	}
+	//	var assetToTrack apybara_indexer.Asset
+	//	assetToTrack.EventType = "BeforeBeginBlocker"
+	//	assetToTrack.BlockHeight = ctx.BlockHeight()
+	//	assetToTrack.Amount = response.Balance.Amount.String()
+	//	assetToTrack.Denom = asset.Denom
+	//	assetToTrack.Address = account.GetAddress().String()
+	//	ApybaraDB.Create(&assetToTrack)
+	//	fmt.Println("BeforeBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
+	//}
+	//fmt.Println("------------------------------------------")
+
 	app.scheduleForkUpgrade(ctx)
-	return app.ModuleManager.BeginBlock(ctx, req)
+
+	responseBeginBlock := app.ModuleManager.BeginBlock(ctx, req)
+
+	fmt.Println("------------------------------------------")
+
+	dA := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	//accountA := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
+	fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight())
+	for _, reward := range dA {
+		var totalRewards apybara_indexer.TotalReward
+		totalRewards.EventType = "AfterBeginBlocker"
+		totalRewards.BlockHeight = ctx.BlockHeight()
+		totalRewards.Amount = reward.Amount.String()
+		totalRewards.Denom = reward.Denom
+		//ApybaraDB.Create(&totalRewards)
+		blockerInfo = append(blockerInfo, apybara_indexer.BlockerAmounts{BeforeBeginBlocker: reward.Amount, Denom: reward.Denom})
+	}
+
+	// get all assets
+	//assetsA := app.AssetsKeeper.GetAllAssets(ctx)
+	//fmt.Println("Len of assets: ", len(assetsA))
+	//for _, asset := range assetsA {
+	//
+	//	response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
+	//		Address: accountA.GetAddress().String(),
+	//		Denom:   asset.Denom,
+	//	})
+	//	if err != nil {
+	//		fmt.Sprintf("Error getting balance: %s", err.Error())
+	//	}
+	//	var assetToTrack apybara_indexer.Asset
+	//	assetToTrack.EventType = "AfterBeginBlocker"
+	//	assetToTrack.BlockHeight = ctx.BlockHeight()
+	//	assetToTrack.Amount = response.Balance.Amount.String()
+	//	assetToTrack.Denom = asset.Denom
+	//	assetToTrack.Address = account.GetAddress().String()
+	//	ApybaraDB.Create(&assetToTrack)
+	//	fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
+	//}
+	ApybaraIndexer.RewardDeltaForBlockers(ctx, blockerInfo)
+
+	fmt.Println("------------------------------------------")
+
+	return responseBeginBlock
 }
 
 // EndBlocker application updates every end block

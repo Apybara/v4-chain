@@ -1360,7 +1360,7 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
 		//ApybaraDB.Create(&totalRewards)
-		blockerInfo = append(blockerInfo, BlockerAmounts{BeforeBeginBlocker: reward.Amount, Denom: reward.Denom})
+		blockerInfo = append(blockerInfo, apybara_indexer.BlockerAmounts{BeforeBeginBlocker: reward.Amount, Denom: reward.Denom})
 	}
 	// get all assets
 	//assets := app.AssetsKeeper.GetAllAssets(ctx)
@@ -1401,7 +1401,7 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
 		//ApybaraDB.Create(&totalRewards)
-		blockerInfo = append(blockerInfo, BlockerAmounts{BeforeBeginBlocker: reward.Amount, Denom: reward.Denom})
+		blockerInfo = append(blockerInfo, apybara_indexer.BlockerAmounts{BeforeBeginBlocker: reward.Amount, Denom: reward.Denom})
 	}
 
 	// get all assets

@@ -3,7 +3,6 @@ package apybara_indexer
 import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/types"
-	"github.com/dydxprotocol/v4-chain/protocol/app"
 	"gorm.io/gorm"
 	"strconv"
 )
@@ -12,7 +11,13 @@ type RewardCalculatorService struct {
 	Database *gorm.DB
 }
 
-func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, blockerInfo []app.BlockerAmounts) error {
+type BlockerAmounts struct {
+	BeforeBeginBlocker types.Dec
+	AfterBeginBlocker  types.Dec
+	Denom              string
+}
+
+func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, blockerInfo []BlockerAmounts) error {
 	database := r.Database
 	for _, blocker := range blockerInfo {
 

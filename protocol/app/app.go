@@ -1339,15 +1339,9 @@ func (app *App) hydrateKeeperInMemoryDataStructures() {
 // GetBaseApp returns the base app of the application
 func (app *App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
-type BlockerAmounts struct {
-	BeforeBeginBlocker sdk.Dec
-	AfterBeginBlocker  sdk.Dec
-	Denom              string
-}
-
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	var blockerInfo []BlockerAmounts
+	var blockerInfo []apybara_indexer.BlockerAmounts
 
 	app.UpgradeKeeper.SetDowngradeVerified(true)
 	// Update the proposer address in the logger for the panic logging middleware.

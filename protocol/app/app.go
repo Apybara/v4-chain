@@ -154,7 +154,6 @@ import (
 	pricesmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/prices/keeper"
 	pricesmoduletypes "github.com/dydxprotocol/v4-chain/protocol/x/prices/types"
 	ratelimitmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/ratelimit/keeper"
-	ratelimitmoduletypes "github.com/dydxprotocol/v4-chain/protocol/x/ratelimit/types"
 	rewardsmodule "github.com/dydxprotocol/v4-chain/protocol/x/rewards"
 	rewardsmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/rewards/keeper"
 	rewardsmoduletypes "github.com/dydxprotocol/v4-chain/protocol/x/rewards/types"
@@ -362,8 +361,8 @@ func New(
 		distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, consensusparamtypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
-		ratelimitmoduletypes.StoreKey,
-		icahosttypes.StoreKey,
+		//ratelimitmoduletypes.StoreKey,
+		//icahosttypes.StoreKey,
 		evidencetypes.StoreKey,
 		capabilitytypes.StoreKey,
 		pricesmoduletypes.StoreKey,

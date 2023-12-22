@@ -3,12 +3,32 @@ package apybara_indexer
 import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/dydxprotocol/v4-chain/protocol/app"
 	"gorm.io/gorm"
 	"strconv"
 )
 
 type RewardCalculatorService struct {
 	Database *gorm.DB
+}
+
+func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, blockerInfo []app.BlockerAmounts) error {
+	database := r.Database
+	for _, blocker := range blockerInfo {
+
+		rewardDelta := blocker.AfterBeginBlocker.Sub(blocker.BeforeBeginBlocker)
+
+		//
+		var rewardDataDelta RewardDataDelta
+		rewardDataDelta.AfterBeginBlockerAmount = blocker.AfterBeginBlocker.String()
+		rewardDataDelta.BeforeBeginBlockerAmount = blocker.BeforeBeginBlocker.String()
+		rewardDataDelta.Denom = blocker.Denom
+		rewardDataDelta.Timestamp = ctx.BlockTime().Unix()
+		rewardDataDelta.BlockHeight = ctx.BlockHeight()
+		rewardDataDelta.Delta = fmt.Sprintf("%.18f", rewardDelta)
+		database.Create(&rewardDataDelta)
+	}
+	return nil
 }
 
 func (r RewardCalculatorService) RewardDelta(ctx types.Context, denom string) (float64, error) {

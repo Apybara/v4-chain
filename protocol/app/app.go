@@ -526,7 +526,7 @@ func New(
 
 	app.GovKeeper = govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-			// register the governance hooks
+		// register the governance hooks
 		),
 	)
 
@@ -1339,8 +1339,16 @@ func (app *App) hydrateKeeperInMemoryDataStructures() {
 // GetBaseApp returns the base app of the application
 func (app *App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
+type BlockerAmounts struct {
+	BeforeBeginBlocker sdk.Dec
+	AfterBeginBlocker  sdk.Dec
+	Denom              string
+}
+
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	var blockerInfo []BlockerAmounts
+
 	app.UpgradeKeeper.SetDowngradeVerified(true)
 	// Update the proposer address in the logger for the panic logging middleware.
 	proposerAddr := sdk.ConsAddress(req.Header.ProposerAddress)
@@ -1348,8 +1356,8 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 
 	fmt.Println("------------------------------------------")
 
-	d := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
-	account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
+	d := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	//account := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
 	fmt.Println("BeforeBeginBlocker", "BlockHeight", ctx.BlockHeight())
 	for _, reward := range d {
 		var totalRewards apybara_indexer.TotalReward
@@ -1357,30 +1365,31 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 		totalRewards.BlockHeight = ctx.BlockHeight()
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
-		ApybaraDB.Create(&totalRewards)
+		//ApybaraDB.Create(&totalRewards)
+		blockerInfo = append(blockerInfo, BlockerAmounts{BeforeBeginBlocker: reward.Amount, Denom: reward.Denom})
 	}
 	// get all assets
-	assets := app.AssetsKeeper.GetAllAssets(ctx)
-	fmt.Println("Len of assets: ", len(assets))
-	for _, asset := range assets {
-
-		response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
-			Address: account.GetAddress().String(),
-			Denom:   asset.Denom,
-		})
-		if err != nil {
-			fmt.Sprintf("Error getting balance: %s", err.Error())
-		}
-		var assetToTrack apybara_indexer.Asset
-		assetToTrack.EventType = "BeforeBeginBlocker"
-		assetToTrack.BlockHeight = ctx.BlockHeight()
-		assetToTrack.Amount = response.Balance.Amount.String()
-		assetToTrack.Denom = asset.Denom
-		assetToTrack.Address = account.GetAddress().String()
-		ApybaraDB.Create(&assetToTrack)
-		fmt.Println("BeforeBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
-	}
-	fmt.Println("------------------------------------------")
+	//assets := app.AssetsKeeper.GetAllAssets(ctx)
+	//fmt.Println("Len of assets: ", len(assets))
+	//for _, asset := range assets {
+	//
+	//	response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
+	//		Address: account.GetAddress().String(),
+	//		Denom:   asset.Denom,
+	//	})
+	//	if err != nil {
+	//		fmt.Sprintf("Error getting balance: %s", err.Error())
+	//	}
+	//	var assetToTrack apybara_indexer.Asset
+	//	assetToTrack.EventType = "BeforeBeginBlocker"
+	//	assetToTrack.BlockHeight = ctx.BlockHeight()
+	//	assetToTrack.Amount = response.Balance.Amount.String()
+	//	assetToTrack.Denom = asset.Denom
+	//	assetToTrack.Address = account.GetAddress().String()
+	//	ApybaraDB.Create(&assetToTrack)
+	//	fmt.Println("BeforeBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
+	//}
+	//fmt.Println("------------------------------------------")
 
 	app.scheduleForkUpgrade(ctx)
 
@@ -1388,8 +1397,8 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 
 	fmt.Println("------------------------------------------")
 
-	dA := app.DistrKeeper.GetTotalRewards(ctx)              // total rewards
-	accountA := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
+	dA := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	//accountA := app.DistrKeeper.GetDistributionAccount(ctx) // distribution account
 	fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight())
 	for _, reward := range dA {
 		var totalRewards apybara_indexer.TotalReward
@@ -1397,32 +1406,32 @@ func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.R
 		totalRewards.BlockHeight = ctx.BlockHeight()
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
-		ApybaraDB.Create(&totalRewards)
+		//ApybaraDB.Create(&totalRewards)
+		blockerInfo = append(blockerInfo, BlockerAmounts{BeforeBeginBlocker: reward.Amount, Denom: reward.Denom})
 	}
-	// get all assets
-	assetsA := app.AssetsKeeper.GetAllAssets(ctx)
-	fmt.Println("Len of assets: ", len(assetsA))
-	for _, asset := range assetsA {
 
-		response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
-			Address: accountA.GetAddress().String(),
-			Denom:   asset.Denom,
-		})
-		if err != nil {
-			fmt.Sprintf("Error getting balance: %s", err.Error())
-		}
-		var assetToTrack apybara_indexer.Asset
-		assetToTrack.EventType = "AfterBeginBlocker"
-		assetToTrack.BlockHeight = ctx.BlockHeight()
-		assetToTrack.Amount = response.Balance.Amount.String()
-		assetToTrack.Denom = asset.Denom
-		assetToTrack.Address = account.GetAddress().String()
-		ApybaraDB.Create(&assetToTrack)
-		fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
-	}
-	for _, totalReward := range dA {
-		ApybaraIndexer.RewardDelta(ctx, totalReward.Denom)
-	}
+	// get all assets
+	//assetsA := app.AssetsKeeper.GetAllAssets(ctx)
+	//fmt.Println("Len of assets: ", len(assetsA))
+	//for _, asset := range assetsA {
+	//
+	//	response, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
+	//		Address: accountA.GetAddress().String(),
+	//		Denom:   asset.Denom,
+	//	})
+	//	if err != nil {
+	//		fmt.Sprintf("Error getting balance: %s", err.Error())
+	//	}
+	//	var assetToTrack apybara_indexer.Asset
+	//	assetToTrack.EventType = "AfterBeginBlocker"
+	//	assetToTrack.BlockHeight = ctx.BlockHeight()
+	//	assetToTrack.Amount = response.Balance.Amount.String()
+	//	assetToTrack.Denom = asset.Denom
+	//	assetToTrack.Address = account.GetAddress().String()
+	//	ApybaraDB.Create(&assetToTrack)
+	//	fmt.Println("AfterBeginBlocker", "BlockHeight", ctx.BlockHeight(), "Balance: ", response.Balance.Amount.String(), "Denom: ", asset.Denom)
+	//}
+	ApybaraIndexer.RewardDeltaForBlockers(ctx, blockerInfo)
 
 	fmt.Println("------------------------------------------")
 

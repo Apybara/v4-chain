@@ -119,7 +119,6 @@ import (
 	bridgemodule "github.com/dydxprotocol/v4-chain/protocol/x/bridge"
 	bridgemodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/bridge/keeper"
 	bridgemoduletypes "github.com/dydxprotocol/v4-chain/protocol/x/bridge/types"
-	clobmodule "github.com/dydxprotocol/v4-chain/protocol/x/clob"
 	clobflags "github.com/dydxprotocol/v4-chain/protocol/x/clob/flags"
 	clobmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/clob/keeper"
 	clobmodulememclob "github.com/dydxprotocol/v4-chain/protocol/x/clob/memclob"
@@ -836,14 +835,14 @@ func New(
 		rate_limit.NewPanicRateLimiter[*clobmoduletypes.MsgPlaceOrder](),
 		rate_limit.NewPanicRateLimiter[*clobmoduletypes.MsgCancelOrder](),
 	)
-	clobModule := clobmodule.NewAppModule(
-		appCodec,
-		app.ClobKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.SubaccountsKeeper,
-		liquidatableSubaccountIds,
-	)
+	//clobModule := clobmodule.NewAppModule(
+	//	appCodec,
+	//	app.ClobKeeper,
+	//	app.AccountKeeper,
+	//	app.BankKeeper,
+	//	app.SubaccountsKeeper,
+	//	liquidatableSubaccountIds,
+	//)
 	app.PerpetualsKeeper.SetClobKeeper(app.ClobKeeper)
 
 	app.SendingKeeper = *sendingmodulekeeper.NewKeeper(
@@ -925,7 +924,7 @@ func New(
 		vestModule,
 		rewardsModule,
 		subaccountsModule,
-		clobModule,
+		//clobModule,
 		sendingModule,
 		delayMsgModule,
 		epochsModule,

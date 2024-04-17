@@ -417,7 +417,7 @@ func New(
 		feegrant.StoreKey,
 		ibcexported.StoreKey,
 		ibctransfertypes.StoreKey,
-		ratelimitmoduletypes.StoreKey,
+		//ratelimitmoduletypes.StoreKey,
 		icacontrollertypes.StoreKey,
 		icahosttypes.StoreKey,
 		evidencetypes.StoreKey,

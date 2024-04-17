@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	apybara_indexer "github.com/dydxprotocol/v4-chain/protocol/apybara-indexer"
+	clobflags "github.com/dydxprotocol/v4-chain/protocol/x/clob/flags"
 	"gorm.io/gorm"
 	"io"
 	"math/big"
@@ -143,7 +144,6 @@ import (
 	bridgemodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/bridge/keeper"
 	bridgemoduletypes "github.com/dydxprotocol/v4-chain/protocol/x/bridge/types"
 	clobmodule "github.com/dydxprotocol/v4-chain/protocol/x/clob"
-	clobflags "github.com/dydxprotocol/v4-chain/protocol/x/clob/flags"
 	clobmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/clob/keeper"
 	clobmodulememclob "github.com/dydxprotocol/v4-chain/protocol/x/clob/memclob"
 	clobmoduletypes "github.com/dydxprotocol/v4-chain/protocol/x/clob/types"
@@ -667,19 +667,19 @@ func New(
 	)
 	blockTimeModule := blocktimemodule.NewAppModule(appCodec, app.BlockTimeKeeper)
 
-	app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
-		appCodec,
-		keys[ratelimitmoduletypes.StoreKey],
-		app.BankKeeper,
-		app.BlockTimeKeeper,
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
-		// set the governance and delaymsg module accounts as the authority for conducting upgrades
-		[]string{
-			lib.GovModuleAddress.String(),
-			delaymsgmoduletypes.ModuleAddress.String(),
-		},
-	)
-	rateLimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
+	//app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
+	//	appCodec,
+	//	keys[ratelimitmoduletypes.StoreKey],
+	//	app.BankKeeper,
+	//	app.BlockTimeKeeper,
+	//	app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+	//	// set the governance and delaymsg module accounts as the authority for conducting upgrades
+	//	[]string{
+	//		lib.GovModuleAddress.String(),
+	//		delaymsgmoduletypes.ModuleAddress.String(),
+	//	},
+	//)
+	//rateLimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
@@ -1171,7 +1171,7 @@ func New(
 		govPlusModule,
 		delayMsgModule,
 		epochsModule,
-		rateLimitModule,
+		//rateLimitModule,
 		vaultModule,
 	)
 

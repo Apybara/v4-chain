@@ -529,6 +529,7 @@ github.com/dvsekhvalnov/jose2go v1.6.0/go.mod h1:QsHjhyTlD/lAVqn/NSbVZmSCGeDehTB
 github.com/dydxprotocol/cometbft v0.38.6-0.20240409171441-6d0767b72c06 h1:Dh5Eweh06inJdgYjQBI7ivoaYFKooAmKYAXbZmliSa8=
 github.com/dydxprotocol/cometbft v0.38.6-0.20240409171441-6d0767b72c06/go.mod h1:REQN+ObgfYxi39TcYR/Hv95C9bPxY3sYJCvghryj7vY=
 github.com/dydxprotocol/cometbft v0.38.6-0.20240409171441-c50784d39a5f/go.mod h1:REQN+ObgfYxi39TcYR/Hv95C9bPxY3sYJCvghryj7vY=
+github.com/dydxprotocol/cosmos-sdk v0.50.5-0.20240220212824-35f31482370c/go.mod h1:AgkOyykpqwdRuf8cLqoA6PxNZC6ODwNmPrEGYuRzBFY=
 github.com/dydxprotocol/cosmos-sdk v0.50.6-0.20240326192503-dd116391188d h1:kHT+xXpjwdKO2drqMEFSN1J6VjEoOweYPIH4RrQ3IWs=
 github.com/dydxprotocol/cosmos-sdk v0.50.6-0.20240326192503-dd116391188d/go.mod h1:NruCXox2SOkVq2ZC5Bs8s2sT+jjVqBEU59wXyZOkCkM=
 github.com/dydxprotocol/cosmos-sdk/store v1.0.3-0.20240326192503-dd116391188d h1:HgLu1FD2oDFzlKW6/+SFXlH5Os8cwNTbplQIrQOWx8w=

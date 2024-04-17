@@ -4,7 +4,6 @@ import (
 	appflags "github.com/dydxprotocol/v4-chain/protocol/app/flags"
 	daemonflags "github.com/dydxprotocol/v4-chain/protocol/daemons/flags"
 	"github.com/dydxprotocol/v4-chain/protocol/indexer"
-	clobflags "github.com/dydxprotocol/v4-chain/protocol/x/clob/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +21,7 @@ func GetOptionWithCustomStartCmd() *RootCmdOption {
 		indexer.AddIndexerFlagsToCmd(cmd)
 
 		// Add clob flags.
-		clobflags.AddClobFlagsToCmd(cmd)
+		//clobflags.AddClobFlagsToCmd(cmd)
 	}
 	option.setCustomizeStartCmd(f)
 	return option

@@ -375,7 +375,7 @@ func newApp(
 		logger,
 		db,
 		traceStore,
-		true,
+		false,
 		appOpts,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),

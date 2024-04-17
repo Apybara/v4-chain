@@ -1425,7 +1425,7 @@ func New(
 		// load the x/prices keeper currency-pair ID cache
 		app.loadCurrencyPairIDsForMarkets()
 	}
-	app.initializeRateLimiters()
+	//app.initializeRateLimiters()
 
 	// Report out app version and git commit. This will be run when validators restart.
 	version := version.NewInfo()

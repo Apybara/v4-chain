@@ -181,7 +181,6 @@ import (
 	subaccountsmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/subaccounts/keeper"
 	satypes "github.com/dydxprotocol/v4-chain/protocol/x/subaccounts/types"
 	vaultmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/vault/keeper"
-	vaultmoduletypes "github.com/dydxprotocol/v4-chain/protocol/x/vault/types"
 	vestmodule "github.com/dydxprotocol/v4-chain/protocol/x/vest"
 	vestmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/vest/keeper"
 	vestmoduletypes "github.com/dydxprotocol/v4-chain/protocol/x/vest/types"
@@ -436,7 +435,7 @@ func New(
 		delaymsgmoduletypes.StoreKey,
 		epochsmoduletypes.StoreKey,
 		govplusmoduletypes.StoreKey,
-		vaultmoduletypes.StoreKey,
+		//vaultmoduletypes.StoreKey,
 	)
 	keys[authtypes.StoreKey] = keys[authtypes.StoreKey].WithLocking()
 	tkeys := storetypes.NewTransientStoreKeys(

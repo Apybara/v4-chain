@@ -19,13 +19,13 @@ type BlockerAmount struct {
 
 func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, blocker BlockerAmount, database *gorm.DB) error {
 
-	afterBeginBlocker, err := strconv.ParseFloat(blocker.AfterBeginBlocker.String(), 64)
+	afterBeginBlocker, err := strconv.ParseFloat(blocker.AfterBeginBlocker.Amount.String(), 64)
 	if err != nil {
 		fmt.Println("error parsing float for afterBeginBlocker", err)
 		return err
 	}
 
-	beforeBeginBlocker, err := strconv.ParseFloat(blocker.BeforeBeginBlocker.String(), 64)
+	beforeBeginBlocker, err := strconv.ParseFloat(blocker.BeforeBeginBlocker.Amount.String(), 64)
 	if err != nil {
 		fmt.Println("error parsing float for beforeBeginBlocker", err)
 		return err
@@ -35,8 +35,8 @@ func (r RewardCalculatorService) RewardDeltaForBlockers(ctx types.Context, block
 
 	//
 	var rewardDataDelta RewardDataDelta
-	rewardDataDelta.AfterBeginBlockerAmount = blocker.AfterBeginBlocker.String()
-	rewardDataDelta.BeforeBeginBlockerAmount = blocker.BeforeBeginBlocker.String()
+	rewardDataDelta.AfterBeginBlockerAmount = blocker.AfterBeginBlocker.Amount.String()
+	rewardDataDelta.BeforeBeginBlockerAmount = blocker.BeforeBeginBlocker.Amount.String()
 	rewardDataDelta.Denom = blocker.Denom
 	rewardDataDelta.Timestamp = ctx.BlockTime().Unix()
 	rewardDataDelta.BlockHeight = ctx.BlockHeight()

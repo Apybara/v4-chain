@@ -1508,7 +1508,7 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 		totalRewards.BlockHeight = ctx.BlockHeight()
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
-
+		fmt.Println("Total DENOM: ", totalRewards, reward.Denom)
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
 			if reward.Amount.BigInt().Int64() > 0 {
 				blockInfosForUsdc.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())

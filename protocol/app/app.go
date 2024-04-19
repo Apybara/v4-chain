@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	apybara_indexer "github.com/dydxprotocol/v4-chain/protocol/app/apybara-indexer"
+	"gorm.io/gorm"
 	"io"
 	"math/big"
 	"net/http"
@@ -210,8 +213,10 @@ var (
 )
 
 var (
-	_ runtime.AppI            = (*App)(nil)
-	_ servertypes.Application = (*App)(nil)
+	_              runtime.AppI            = (*App)(nil)
+	_              servertypes.Application = (*App)(nil)
+	ApybaraDB      *gorm.DB
+	ApybaraIndexer apybara_indexer.RewardCalculatorService
 )
 
 func init() {
@@ -225,6 +230,14 @@ func init() {
 	// Set DefaultPowerReduction to 1e18 to avoid overflow whe calculating
 	// consensus power.
 	sdk.DefaultPowerReduction = lib.PowerReduction
+
+	dsn := os.Getenv("APYBARA_INDEXER_DB_DSN")
+	db, err := apybara_indexer.ConnectPg(dsn)
+	if err != nil {
+		fmt.Sprintf("failed to connect to db: %s", err.Error())
+	}
+	ApybaraDB = db
+	ApybaraIndexer = apybara_indexer.RewardCalculatorService{Database: db}
 }
 
 // App extends an ABCI application, but with most of its parameters exported.
@@ -1482,13 +1495,70 @@ func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	ctx = ctx.WithExecMode(lib.ExecModeBeginBlock)
-
+	var blockInfosForUsdc apybara_indexer.BlockerAmount
+	var blockInfosForAdydx apybara_indexer.BlockerAmount
 	// Update the proposer address in the logger for the panic logging middleware.
 	proposerAddr := sdk.ConsAddress(ctx.BlockHeader().ProposerAddress)
 	middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
 
+	d := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	for _, reward := range d {
+		var totalRewards apybara_indexer.TotalReward
+		totalRewards.EventType = "BeforeBeginBlocker"
+		totalRewards.BlockHeight = ctx.BlockHeight()
+		totalRewards.Amount = reward.Amount.String()
+		totalRewards.Denom = reward.Denom
+
+		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
+			blockInfosForUsdc.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+			blockInfosForUsdc.Denom = reward.Denom
+		}
+
+		if reward.Denom == "adydx" {
+			blockInfosForAdydx.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+			blockInfosForAdydx.Denom = reward.Denom
+		}
+
+	}
+
 	app.scheduleForkUpgrade(ctx)
-	return app.ModuleManager.BeginBlock(ctx)
+	responseBeginBlock, err := app.ModuleManager.BeginBlock(ctx)
+	if err != nil {
+		return sdk.BeginBlock{}, err
+	}
+
+	dA := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	for _, reward := range dA {
+		var totalRewards apybara_indexer.TotalReward
+		totalRewards.EventType = "AfterBeginBlocker"
+		totalRewards.BlockHeight = ctx.BlockHeight()
+		totalRewards.Amount = reward.Amount.String()
+		totalRewards.Denom = reward.Denom
+		//ApybaraDB.Create(&totalRewards)
+
+		// update the blockerInfo
+		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
+			blockInfosForUsdc.AfterBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+			blockInfosForUsdc.Denom = reward.Denom
+		}
+
+		if reward.Denom == "adydx" {
+			blockInfosForAdydx.AfterBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+			blockInfosForAdydx.Denom = reward.Denom
+		}
+
+	}
+
+	err = ApybaraDB.Transaction(func(tx *gorm.DB) error {
+		ApybaraIndexer.RewardDeltaForBlockers(ctx, blockInfosForUsdc, tx)
+		ApybaraIndexer.RewardDeltaForBlockers(ctx, blockInfosForAdydx, tx)
+		return nil
+	})
+	if err != nil {
+		fmt.Println("Error in transaction: ", err.Error())
+	}
+
+	return responseBeginBlock, nil
 }
 
 // EndBlocker application updates every end block

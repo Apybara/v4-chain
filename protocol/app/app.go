@@ -443,7 +443,7 @@ func New(
 	)
 
 	app.ParamsKeeper = initParamsKeeper(appCodec, cdc, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
-	app.DisableHealthMonitorForTesting()
+
 	// set the BaseApp's parameter store
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
 		appCodec,
@@ -744,6 +744,7 @@ func New(
 		app.Logger(),
 		daemonFlags.Shared.PanicOnDaemonFailureEnabled,
 	)
+	app.DisableHealthMonitorForTesting()
 	// Create a closure for starting daemons and daemon server. Daemon services are delayed until after the gRPC
 	// service is started because daemons depend on the gRPC service being available. If a node is initialized
 	// with a genesis time in the future, then the gRPC service will not be available until the genesis time, the

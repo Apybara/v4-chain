@@ -1569,7 +1569,7 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 			// convert amount string to int64
 			amountReward, _ := strconv.ParseInt(reward.Amount.String(), 10, 64)
 
-			if reward.Amount.BigInt().Int64() > 0 {
+			if amountReward > 0 {
 				fmt.Println("USDC USDC: ", reward.Denom, reward.Amount.BigInt().Int64())
 				blockInfosForUsdc.AfterBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, amountReward)
 				blockInfosForUsdc.Denom = reward.Denom
@@ -1578,11 +1578,11 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 
 		if reward.Denom == "adydx" {
 			amountReward, _ := strconv.ParseInt(reward.Amount.String(), 10, 64)
-			//if reward.Amount.BigInt().Int64() > 0 {
-			fmt.Println("adydx adydx: ", reward.Denom, reward.Amount.BigInt().Int64())
-			blockInfosForAdydx.AfterBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, amountReward)
-			blockInfosForAdydx.Denom = reward.Denom
-			//}
+			if reward.Amount.BigInt().Int64() > 0 {
+				fmt.Println("adydx adydx: ", reward.Denom, reward.Amount.BigInt().Int64())
+				blockInfosForAdydx.AfterBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, amountReward)
+				blockInfosForAdydx.Denom = reward.Denom
+			}
 		}
 
 	}

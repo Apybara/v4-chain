@@ -1511,6 +1511,10 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
 
 	d := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	fmt.Println("BeforeBeginBlocker")
+	for _, rd := range d {
+		fmt.Println("Total Rewards: ", rd.Amount.String(), rd.Denom)
+	}
 	for _, reward := range d {
 		var totalRewards apybara_indexer.TotalReward
 		totalRewards.EventType = "BeforeBeginBlocker"
@@ -1543,8 +1547,11 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	if err != nil {
 		return sdk.BeginBlock{}, err
 	}
-
+	fmt.Println("AfterBeginBlocker")
 	dA := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	for _, rd := range dA {
+		fmt.Println("Total Rewards: ", rd.Amount.String(), rd.Denom)
+	}
 	for _, reward := range dA {
 		var totalRewards apybara_indexer.TotalReward
 		totalRewards.EventType = "AfterBeginBlocker"
@@ -1554,7 +1561,6 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 		//ApybaraDB.Create(&totalRewards)
 
 		// update the blockerInfo
-		fmt.Println("AfterBeginBlocker")
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
 			//if reward.Amount.BigInt().Int64() > 0 {
 			fmt.Println("USDC USDC: ", reward.Denom, reward.Amount.BigInt().Int64())

@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
-	"strconv"
 	"sync"
 	"time"
 
@@ -582,7 +581,7 @@ func New(
 
 	app.GovKeeper = govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
@@ -613,7 +612,7 @@ func New(
 	// Create ICA Host Keeper
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
-		keys[icahosttypes.StoreKey], // key
+		keys[icahosttypes.StoreKey],                 // key
 		app.getSubspace(icahosttypes.SubModuleName), // paramSpace
 		app.IBCKeeper.ChannelKeeper,                 // ics4Wrapper, may be replaced with middleware such as ics29 fee
 		app.IBCKeeper.ChannelKeeper,                 // channelKeeper
@@ -1525,22 +1524,14 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 		fmt.Println("BeforeBeginBlocker")
 		fmt.Println("Total DENOM: ", totalRewards, reward.Denom)
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
+			blockInfosForUsdc.BeforeBeginBlocker = sdk.NewDecCoinFromDec(reward.Denom, reward.Amount)
+			blockInfosForUsdc.Denom = reward.Denom
 
-			fmt.Println("USDC USDC: ", reward.Denom, reward.Amount.BigInt().Int64())
-			amountReward, _ := strconv.ParseInt(reward.Amount.String(), 10, 64)
-			if amountReward > 0 {
-				blockInfosForUsdc.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, amountReward)
-				blockInfosForUsdc.Denom = reward.Denom
-			}
 		}
 
 		if reward.Denom == "adydx" {
-			fmt.Println("adydx adydx: ", reward.Denom, reward.Amount.BigInt().Int64())
-			amountReward, _ := strconv.ParseInt(reward.Amount.String(), 10, 64)
-			if amountReward > 0 {
-				blockInfosForAdydx.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, amountReward)
-				blockInfosForAdydx.Denom = reward.Denom
-			}
+			blockInfosForAdydx.BeforeBeginBlocker = sdk.NewDecCoinFromDec(reward.Denom, reward.Amount)
+			blockInfosForAdydx.Denom = reward.Denom
 		}
 
 	}
@@ -1566,25 +1557,16 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 		// update the blockerInfo
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
 
-			// convert amount string to int64
-			amountReward, _ := strconv.ParseInt(reward.Amount.String(), 10, 64)
+			blockInfosForUsdc.AfterBeginBlocker = sdk.NewDecCoinFromDec(reward.Denom, reward.Amount)
+			blockInfosForUsdc.Denom = reward.Denom
 
-			if amountReward > 0 {
-				fmt.Println("USDC USDC: ", reward.Denom, reward.Amount.BigInt().Int64())
-				blockInfosForUsdc.AfterBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, amountReward)
-				blockInfosForUsdc.Denom = reward.Denom
-			}
 		}
 
 		if reward.Denom == "adydx" {
-			amountReward, _ := strconv.ParseInt(reward.Amount.String(), 10, 64)
-			if reward.Amount.BigInt().Int64() > 0 {
-				fmt.Println("adydx adydx: ", reward.Denom, reward.Amount.BigInt().Int64())
-				blockInfosForAdydx.AfterBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, amountReward)
-				blockInfosForAdydx.Denom = reward.Denom
-			}
-		}
+			blockInfosForAdydx.AfterBeginBlocker = sdk.NewDecCoinFromDec(reward.Denom, reward.Amount)
+			blockInfosForAdydx.Denom = reward.Denom
 
+		}
 	}
 
 	err = ApybaraDB.Transaction(func(tx *gorm.DB) error {

@@ -443,7 +443,7 @@ func New(
 	)
 
 	app.ParamsKeeper = initParamsKeeper(appCodec, cdc, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
-
+	app.DisableHealthMonitorForTesting()
 	// set the BaseApp's parameter store
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
 		appCodec,

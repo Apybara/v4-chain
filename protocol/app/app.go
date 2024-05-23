@@ -1522,18 +1522,18 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
 
 			fmt.Println("USDC USDC: ", reward.Denom, reward.Amount.BigInt().Int64())
-			//if reward.Amount.BigInt().Int64() > 0 {
-			blockInfosForUsdc.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
-			blockInfosForUsdc.Denom = reward.Denom
-			//}
+			if reward.Amount.BigInt().Int64() > 0 {
+				blockInfosForUsdc.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+				blockInfosForUsdc.Denom = reward.Denom
+			}
 		}
 
 		if reward.Denom == "adydx" {
 			fmt.Println("adydx adydx: ", reward.Denom, reward.Amount.BigInt().Int64())
-			//if reward.Amount.BigInt().Int64() > 0 {
-			blockInfosForAdydx.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
-			blockInfosForAdydx.Denom = reward.Denom
-			//}
+			if reward.Amount.BigInt().Int64() > 0 {
+				blockInfosForAdydx.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+				blockInfosForAdydx.Denom = reward.Denom
+			}
 		}
 
 	}

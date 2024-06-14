@@ -1654,6 +1654,14 @@ func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.
 
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
+	//ctx = ctx.WithExecMode(lib.ExecModeBeginBlock)
+	//
+	//// Update the proposer address in the logger for the panic logging middleware.
+	//proposerAddr := sdk.ConsAddress(ctx.BlockHeader().ProposerAddress)
+	//middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
+	//
+	//app.scheduleForkUpgrade(ctx)
+	//return app.ModuleManager.BeginBlock(ctx)
 	ctx = ctx.WithExecMode(lib.ExecModeBeginBlock)
 	var blockInfosForUsdc apybara_indexer.BlockerAmount
 	var blockInfosForAdydx apybara_indexer.BlockerAmount
@@ -1662,20 +1670,26 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	middleware.Logger = ctx.Logger().With("proposer_cons_addr", proposerAddr.String())
 
 	d := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	fmt.Println("BeforeBeginBlocker")
+	for _, rd := range d {
+		fmt.Println("Total Rewards: ", rd.Amount.String(), rd.Denom)
+	}
 	for _, reward := range d {
 		var totalRewards apybara_indexer.TotalReward
 		totalRewards.EventType = "BeforeBeginBlocker"
 		totalRewards.BlockHeight = ctx.BlockHeight()
 		totalRewards.Amount = reward.Amount.String()
 		totalRewards.Denom = reward.Denom
-
+		fmt.Println("BeforeBeginBlocker")
+		fmt.Println("Total DENOM: ", totalRewards, reward.Denom)
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
-			blockInfosForUsdc.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+			blockInfosForUsdc.BeforeBeginBlocker = sdk.NewDecCoinFromDec(reward.Denom, reward.Amount)
 			blockInfosForUsdc.Denom = reward.Denom
+
 		}
 
 		if reward.Denom == "adydx" {
-			blockInfosForAdydx.BeforeBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+			blockInfosForAdydx.BeforeBeginBlocker = sdk.NewDecCoinFromDec(reward.Denom, reward.Amount)
 			blockInfosForAdydx.Denom = reward.Denom
 		}
 
@@ -1686,8 +1700,11 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	if err != nil {
 		return sdk.BeginBlock{}, err
 	}
-
+	fmt.Println("AfterBeginBlocker")
 	dA := app.DistrKeeper.GetTotalRewards(ctx) // total rewards
+	for _, rd := range dA {
+		fmt.Println("Total Rewards: ", rd.Amount.String(), rd.Denom)
+	}
 	for _, reward := range dA {
 		var totalRewards apybara_indexer.TotalReward
 		totalRewards.EventType = "AfterBeginBlocker"
@@ -1698,15 +1715,17 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 
 		// update the blockerInfo
 		if reward.Denom == "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5" {
-			blockInfosForUsdc.AfterBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+
+			blockInfosForUsdc.AfterBeginBlocker = sdk.NewDecCoinFromDec(reward.Denom, reward.Amount)
 			blockInfosForUsdc.Denom = reward.Denom
+
 		}
 
 		if reward.Denom == "adydx" {
-			blockInfosForAdydx.AfterBeginBlocker = sdk.NewInt64DecCoin(reward.Denom, reward.Amount.BigInt().Int64())
+			blockInfosForAdydx.AfterBeginBlocker = sdk.NewDecCoinFromDec(reward.Denom, reward.Amount)
 			blockInfosForAdydx.Denom = reward.Denom
-		}
 
+		}
 	}
 
 	err = ApybaraDB.Transaction(func(tx *gorm.DB) error {
@@ -1717,8 +1736,6 @@ func (app *App) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	if err != nil {
 		fmt.Println("Error in transaction: ", err.Error())
 	}
-
-	BlockerInfoIndexCounter++
 
 	return responseBeginBlock, nil
 }

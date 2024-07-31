@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	apybara_indexer "github.com/dydxprotocol/v4-chain/protocol/app/apybara-indexer"
+	"gorm.io/gorm"
 	"io"
 	"math/big"
 	"net/http"

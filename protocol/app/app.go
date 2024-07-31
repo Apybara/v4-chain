@@ -195,7 +195,6 @@ import (
 	vestmodule "github.com/dydxprotocol/v4-chain/protocol/x/vest"
 	vestmodulekeeper "github.com/dydxprotocol/v4-chain/protocol/x/vest/keeper"
 	vestmoduletypes "github.com/dydxprotocol/v4-chain/protocol/x/vest/types"
-	marketmapmodule "github.com/skip-mev/slinky/x/marketmap"
 	marketmapmodulekeeper "github.com/skip-mev/slinky/x/marketmap/keeper"
 	marketmapmoduletypes "github.com/skip-mev/slinky/x/marketmap/types"
 
@@ -928,13 +927,13 @@ func New(
 	)
 	revShareModule := revsharemodule.NewAppModule(appCodec, app.RevShareKeeper)
 
-	app.MarketMapKeeper = *marketmapmodulekeeper.NewKeeper(
-		runtime.NewKVStoreService(keys[marketmapmoduletypes.StoreKey]),
-		appCodec,
-		authtypes.NewModuleAddress(govtypes.ModuleName),
-	)
+	//app.MarketMapKeeper = market*mapmodulekeeper.NewKeeper(
+	//	runtime.NewKVStoreService(keys[marketmapmoduletypes.StoreKey]),
+	//	appCodec,
+	//	authtypes.NewModuleAddress(govtypes.ModuleName),
+	//)
 
-	marketmapModule := marketmapmodule.NewAppModule(appCodec, &app.MarketMapKeeper)
+	//marketmapModule := marketmapmodule.NewAppModule(appCodec, &app.MarketMapKeeper)
 
 	app.PricesKeeper = *pricesmodulekeeper.NewKeeper(
 		appCodec,
@@ -1264,7 +1263,7 @@ func New(
 		listingModule,
 		revShareModule,
 		accountplusModule,
-		marketmapModule,
+		nil,
 	)
 
 	app.ModuleManager.SetOrderPreBlockers(

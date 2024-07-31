@@ -1514,7 +1514,7 @@ func New(
 
 	// Set handlers and store loaders for upgrades.
 	app.setupUpgradeHandlers()
-	app.setupUpgradeStoreLoaders()
+	//app.setupUpgradeStoreLoaders()
 
 	// Currently the only case that exists where the app is _not_ started with loadLatest=true is when state is
 	// loaded and then immediately exported to a file. In those cases, `LoadHeight` within `app.go` is called instead.

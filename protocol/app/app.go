@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	apybara_indexer "github.com/dydxprotocol/v4-chain/protocol/app/apybara-indexer"
+	marketmapmodule "github.com/skip-mev/slinky/x/marketmap"
 	"gorm.io/gorm"
 	"io"
 	"math/big"
@@ -933,7 +934,7 @@ func New(
 	//	authtypes.NewModuleAddress(govtypes.ModuleName),
 	//)
 
-	//marketmapModule := marketmapmodule.NewAppModule(appCodec, &app.MarketMapKeeper)
+	marketmapModule := marketmapmodule.NewAppModule(appCodec, &app.MarketMapKeeper)
 
 	app.PricesKeeper = *pricesmodulekeeper.NewKeeper(
 		appCodec,
@@ -1263,7 +1264,7 @@ func New(
 		listingModule,
 		revShareModule,
 		accountplusModule,
-		nil,
+		marketmapModule,
 	)
 
 	app.ModuleManager.SetOrderPreBlockers(
